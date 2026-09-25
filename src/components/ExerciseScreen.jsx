@@ -308,6 +308,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
   const [liveExercises, setLiveExercises] = useState([]);
   const [timerSec, setTimerSec] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [formResetKey, setFormResetKey] = useState(0);
 
   // Timer effect for live mode
   useEffect(() => {
@@ -327,10 +328,24 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
     const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
     setLiveExercises(prev => [...prev, withCalories]);
     setCurrentWorkout({ activity: selectedActivity });
+    setFormResetKey(prev => prev + 1);
   };
 
   const handleFinishLive = () => {
+    if (liveExercises.length === 0) {
+      alert('No exercises added to this session.');
+      return;
+    }
+    // Optionally add a generic entry for the total session time
+    const sessionWorkout = {
+      activity: 'Other',
+      notes: `Live Session Total Elapsed Time`,
+      timeMinutes: Math.round(timerSec / 60),
+      calories: 0 // calories are already accounted for in individual exercises
+    };
     liveExercises.forEach(w => onSave(w));
+    onSave(sessionWorkout); // Save the total elapsed time separately
+    
     setLiveExercises([]);
     setTimerSec(0);
     setTimerRunning(false);
@@ -347,6 +362,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
     const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
     onSave(withCalories);
     setCurrentWorkout({ activity: selectedActivity });
+    setFormResetKey(prev => prev + 1);
   };
 
   // Inject the date from the parent habit record so we can display it correctly
@@ -429,7 +445,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
               ))}
             </select>
           </div>
-          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
+          <ActivityForm key={`live-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
           <div className="flex space-x-4">
             <button
               type="button"
@@ -481,7 +497,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
               ))}
             </select>
           </div>
-          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
+          <ActivityForm key={`static-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
           <button
             type="submit"
             onClick={handleStaticSubmit}
