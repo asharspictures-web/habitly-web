@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Send, Plus, Upload, X, Image as ImageIcon, Utensils, Camera } from 'lucide-react';
+import { Mic, Send, Plus, Upload, X, Image as ImageIcon, Utensils, Camera, Trash2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { parseFoodFromQuery } from '../lib/gemini';
 
@@ -7,7 +7,7 @@ import { COMMON_FOODS } from '../lib/foodUtils';
 
 const CATEGORIES = ['All', 'Indian', 'International', 'Healthy', 'Quick Snacks'];
 
-export default function FoodScreen({ habits = [], onSave }) {
+export default function FoodScreen({ habits = [], onSave, onRemove }) {
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -389,7 +389,7 @@ export default function FoodScreen({ habits = [], onSave }) {
                   return (
                     <div
                       key={`logged-food-${idx}-${food.timestamp || idx}`}
-                      className="bg-[#09090b] border border-[#27272a] p-3.5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition"
+                      className="group bg-[#09090b] border border-[#27272a] p-3.5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition"
                     >
                       <div className="flex items-center space-x-3.5 min-w-0">
                         {food.photo ? (
@@ -423,10 +423,21 @@ export default function FoodScreen({ habits = [], onSave }) {
                           </div>
                         </div>
                       </div>
-                      <div className="text-xs text-zinc-500 flex-shrink-0 ml-2">
-                        {food.timestamp
-                          ? new Date(food.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : 'Logged'}
+                      <div className="flex items-center">
+                        <div className="text-xs text-zinc-500 mr-4">
+                          {food.timestamp
+                            ? new Date(food.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : 'Logged'}
+                        </div>
+                        {onRemove && (
+                          <button
+                            onClick={() => onRemove(food.timestamp)}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                            title="Remove Food"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

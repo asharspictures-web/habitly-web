@@ -86,6 +86,12 @@ export function useHabits() {
     }));
   };
 
+  const removeFood = (timestamp) => {
+    updateToday(current => ({
+      foods: (current.foods || []).filter(f => f.timestamp !== timestamp)
+    }));
+  };
+
   const updateSteps = (steps) => {
     updateToday({ steps: Math.max(0, Number(steps) || 0) });
   };
@@ -129,6 +135,7 @@ export function useHabits() {
     getTodayHabit,
     addWorkout,
     addFood,
+    removeFood,
     updateSteps,
     updateGoals,
     addEntry,

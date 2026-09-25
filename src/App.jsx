@@ -18,6 +18,7 @@ function App() {
     goals, 
     addWorkout, 
     addFood, 
+    removeFood,
     updateSteps, 
     updateGoals,
     updateWater,
@@ -36,7 +37,7 @@ function App() {
       case 'exercise':
         return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} />;
       case 'food':
-        return <FoodScreen habits={habits} onSave={addFood} />;
+        return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} />;
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
