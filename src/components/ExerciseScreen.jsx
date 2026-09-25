@@ -514,6 +514,35 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
     });
   };
 
+  const handleFinishRoutine = () => {
+    const undoneCount = activeRoutine.length - activeRoutine.filter((_, idx) => routineTimers[idx]?.done).length;
+    
+    if (undoneCount > 0) {
+      const phrases = [
+        "So close, just a bit more!",
+        "You've got this, finish strong!",
+        "Almost there, keep pushing!",
+        "Don't stop now, you're doing great!"
+      ];
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+      showConfirm(
+        `You still have ${undoneCount} exercise${undoneCount > 1 ? 's' : ''} left. ${phrase}`,
+        () => {
+          updateGoals({ ...goals, activeRoutine: [] });
+          setRoutineTimers({});
+          showAlert("Routine finished and cleared!");
+        },
+        null,
+        "Finish Anyway",
+        "Continue Workout"
+      );
+    } else {
+      updateGoals({ ...goals, activeRoutine: [] });
+      setRoutineTimers({});
+      showAlert("Awesome! You completed your entire routine!");
+    }
+  };
+
   // Group workouts into sessions
   const sessions = [];
   
@@ -618,9 +647,12 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
                 <div key={idx} className={`bg-[#09090b] border p-4 rounded-xl flex items-center justify-between ${isDone ? 'border-emerald-500/50 opacity-70' : isRunning ? 'border-red-500' : 'border-[#27272a]'}`}>
                   <div>
                     <h4 className={`font-bold ${isDone ? 'text-emerald-500' : 'text-white'}`}>{ex.name}</h4>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-zinc-500 mb-1">
                       {isDone ? `Done (${elapsedFmt})` : isRunning ? `Running: ${elapsedFmt}` : 'Ready to start'}
                     </p>
+                    <a href={`https://www.youtube.com/results?search_query=how+to+do+${encodeURIComponent(ex.name)}+exercise`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 underline">
+                      How to do this ↗
+                    </a>
                   </div>
                   <div>
                     {isDone ? (
@@ -640,6 +672,40 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
                 </div>
               );
             })}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-red-500/20">
+            <button
+              onClick={() => {
+                const name = document.getElementById('custom-ex-input')?.value;
+                if (name && name.trim()) {
+                  updateGoals({ ...goals, activeRoutine: [...activeRoutine, { name: name.trim(), met: 4.0, tags: [] }] });
+                  document.getElementById('custom-ex-input').value = '';
+                }
+              }}
+              className="w-full text-xs text-red-400 hover:text-red-300 font-bold mb-2 text-center block"
+            >
+              + Add Custom Exercise to Routine
+            </button>
+            <div className="flex space-x-2">
+              <input id="custom-ex-input" type="text" placeholder="Custom exercise name..." className="flex-1 bg-[#09090b] border border-[#27272a] text-white text-xs p-2 rounded-lg focus:outline-none" onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const name = e.target.value;
+                  if (name.trim()) {
+                    updateGoals({ ...goals, activeRoutine: [...activeRoutine, { name: name.trim(), met: 4.0, tags: [] }] });
+                    e.target.value = '';
+                  }
+                }
+              }} />
+            </div>
+            
+            <button
+              onClick={handleFinishRoutine}
+              className="w-full mt-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center space-x-2 cursor-pointer shadow-lg transition-colors"
+            >
+              <Check size={18} />
+              <span>Finish Routine</span>
+            </button>
           </div>
         </div>
       )}

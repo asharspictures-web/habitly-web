@@ -13,6 +13,8 @@ const DEFAULT_GOALS = {
   activityLevel: 'sedentary',
   healthConditions: '',
   dietaryPreferences: 'none',
+  wakeTime: '07:00',
+  sleepTime: '23:00',
 };
 
 export function useHabits() {

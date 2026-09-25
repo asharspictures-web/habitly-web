@@ -112,8 +112,37 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
       suggestedFoods = suggestedFoods.filter(f => !['Peanut', 'Nut'].some(m => f.name.includes(m)));
     }
     
-    // Pick 3 random foods that vaguely fit the calorie goal (we just pick 3 for demo)
-    suggestedFoods = suggestedFoods.sort(() => 0.5 - Math.random()).slice(0, 3);
+    // Pick 5 random foods that fit the calorie goal 
+    const wakeStr = goals.wakeTime || '07:00';
+    const sleepStr = goals.sleepTime || '23:00';
+    const wakeParts = wakeStr.split(':').map(Number);
+    const sleepParts = sleepStr.split(':').map(Number);
+    let wakeMins = wakeParts[0] * 60 + wakeParts[1];
+    let sleepMins = sleepParts[0] * 60 + sleepParts[1];
+    if (sleepMins < wakeMins) sleepMins += 24 * 60; // crossed midnight
+    const span = sleepMins - wakeMins;
+    
+    const times = [
+      wakeMins + 60, // Breakfast 1hr after wake
+      wakeMins + span * 0.3, // Mid-Morning
+      wakeMins + span * 0.5, // Lunch
+      wakeMins + span * 0.75, // Evening Snack
+      sleepMins - 120 // Dinner 2 hrs before bed
+    ].map(mins => {
+      let h = Math.floor(mins / 60) % 24;
+      let m = Math.floor(mins % 60);
+      let ampm = h >= 12 ? 'PM' : 'AM';
+      let hh = h % 12 || 12;
+      return `${hh}:${m.toString().padStart(2, '0')} ${ampm}`;
+    });
+
+    const mealLabels = ["Breakfast", "Mid-Morning Snack", "Lunch", "Evening Snack", "Dinner"];
+    const pickedFoods = suggestedFoods.sort(() => 0.5 - Math.random());
+    
+    suggestedFoods = mealLabels.map((label, i) => {
+       const foodItem = pickedFoods[i % pickedFoods.length];
+       return { ...foodItem, mealLabel: label, suggestedTime: times[i] };
+    });
 
     // Workout Suggestions
     let suggestedSteps = 5000;
@@ -288,25 +317,31 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
                   <h4 className="text-sm font-bold text-white mb-3 flex items-center">
                     <Utensils size={16} className="text-zinc-400 mr-2" /> Suggested Meals for You
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {premiumPlan.suggestedFoods.map((food, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-[#09090b] border border-[#27272a] p-3 rounded-xl">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{food.icon}</span>
-                          <div>
-                            <p className="text-sm font-bold text-white">{food.name}</p>
-                            <p className="text-xs text-zinc-500">{food.cal} kcal · {food.p}P / {food.c}C / {food.f}F</p>
-                          </div>
+                      <div key={idx} className="bg-[#09090b] border border-[#27272a] p-3 rounded-xl">
+                        <div className="flex justify-between items-center mb-2 pb-2 border-b border-[#27272a]/50">
+                          <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">{food.mealLabel}</span>
+                          <span className="text-xs text-zinc-500 font-mono">{food.suggestedTime}</span>
                         </div>
-                        <button 
-                          onClick={() => {
-                            addFood({ ...food, timestamp: new Date().toISOString() });
-                            showAlert(`Added ${food.name} to today's log!`);
-                          }}
-                          className="bg-[#27272a] hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          + Log
-                        </button>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{food.icon}</span>
+                            <div>
+                              <p className="text-sm font-bold text-white">{food.name}</p>
+                              <p className="text-xs text-zinc-500">{food.cal} kcal · {food.p}P / {food.c}C / {food.f}F</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              addFood({ ...food, timestamp: new Date().toISOString() });
+                              showAlert(`Added ${food.name} to today's log!`);
+                            }}
+                            className="bg-[#27272a] hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            + Log
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -512,8 +547,19 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
             
             {wizardStep === 4 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <p className="text-zinc-400 mb-6">Any final health or dietary preferences we should know about?</p>
+                <p className="text-zinc-400 mb-6">Final details for your schedule and preferences.</p>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Wake Time</label>
+                    <input type="time" value={localGoals.wakeTime || '07:00'} onChange={e => setLocalGoals({...localGoals, wakeTime: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Sleep Time</label>
+                    <input type="time" value={localGoals.sleepTime || '23:00'} onChange={e => setLocalGoals({...localGoals, sleepTime: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-zinc-300 mb-2">Injuries or Health Conditions (Optional)</label>
                   <input type="text" placeholder="e.g. Bad knees, Cardiac Safe" value={localGoals.healthConditions || ''} onChange={e => setLocalGoals({...localGoals, healthConditions: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
