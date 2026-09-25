@@ -329,7 +329,18 @@ export default function GoalsScreen({ goals, updateGoals, addFood }) {
                   </div>
                   
                   <div className="bg-[#09090b] border border-[#27272a] p-4 rounded-xl">
-                    <p className="text-sm font-bold text-white mb-2">Safe Starter Routine</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-white">Safe Starter Routine</p>
+                      <button 
+                        onClick={() => {
+                          updateGoals({ ...goals, activeRoutine: premiumPlan.suggestedWorkout });
+                          alert('Routine exported! Go to the Exercise tab to start your workout.');
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Export to Exercise
+                      </button>
+                    </div>
                     <ul className="space-y-2">
                       {premiumPlan.suggestedWorkout.map((ex, idx) => (
                         <li key={idx} className="text-sm text-zinc-400 flex items-center">

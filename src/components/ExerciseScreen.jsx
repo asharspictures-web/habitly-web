@@ -381,7 +381,7 @@ function ActivityForm({ activity, onChange, habits }) {
   );
 }
 
-export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
+export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals, updateGoals }) {
   const [mode, setMode] = useState('static'); // 'static' | 'live'
   const [selectedActivity, setSelectedActivity] = useState('Strength Training');
   const [currentWorkout, setCurrentWorkout] = useState({ activity: selectedActivity });
@@ -458,6 +458,60 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
     onSave(withCalories);
     setCurrentWorkout({ activity: selectedActivity });
     setFormResetKey(prev => prev + 1);
+  };
+
+  // Active Routine Tracking
+  const activeRoutine = goals?.activeRoutine || [];
+  const [routineTimers, setRoutineTimers] = useState({});
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setRoutineTimers(prev => {
+        let changed = false;
+        const next = { ...prev };
+        for (const idx in next) {
+          if (next[idx]?.running) {
+            next[idx] = { ...next[idx], elapsed: Date.now() - next[idx].startTime };
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const handleStartRoutine = (idx) => {
+    setRoutineTimers(prev => ({
+      ...prev,
+      [idx]: { startTime: Date.now(), elapsed: 0, running: true, done: false }
+    }));
+  };
+
+  const handleStopRoutine = (idx, ex) => {
+    setRoutineTimers(prev => {
+      const current = prev[idx];
+      if (!current || !current.running) return prev;
+      
+      const elapsedMs = Date.now() - current.startTime;
+      const hours = elapsedMs / (1000 * 60 * 60);
+      const weightKg = goals?.currentWeight || 70;
+      const met = ex.met || 4.0;
+      const calories = Math.round(met * weightKg * hours);
+
+      onSave({
+        activity: 'Strength Training',
+        exerciseName: ex.name,
+        timeMinutes: Math.round(elapsedMs / 60000),
+        calories,
+        sessionId: Date.now()
+      });
+
+      return {
+        ...prev,
+        [idx]: { ...current, elapsed: elapsedMs, running: false, done: true }
+      };
+    });
   };
 
   // Group workouts into sessions
@@ -544,6 +598,51 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       </div>
+
+      {activeRoutine.length > 0 && (
+        <div className="bg-[#18181b] rounded-2xl border border-red-500/30 p-6 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-bl-xl z-10">Active Routine</div>
+          <h3 className="font-bold text-white mb-4">Your Custom Premium Routine</h3>
+          <div className="space-y-3">
+            {activeRoutine.map((ex, idx) => {
+              const tr = routineTimers[idx] || {};
+              const isRunning = tr.running;
+              const isDone = tr.done;
+              // Format ms to MM:SS
+              const totalSecs = Math.floor((tr.elapsed || 0) / 1000);
+              const m = Math.floor(totalSecs / 60).toString().padStart(2, '0');
+              const s = (totalSecs % 60).toString().padStart(2, '0');
+              const elapsedFmt = `${m}:${s}`;
+
+              return (
+                <div key={idx} className={`bg-[#09090b] border p-4 rounded-xl flex items-center justify-between ${isDone ? 'border-emerald-500/50 opacity-70' : isRunning ? 'border-red-500' : 'border-[#27272a]'}`}>
+                  <div>
+                    <h4 className={`font-bold ${isDone ? 'text-emerald-500' : 'text-white'}`}>{ex.name}</h4>
+                    <p className="text-xs text-zinc-500">
+                      {isDone ? `Done (${elapsedFmt})` : isRunning ? `Running: ${elapsedFmt}` : 'Ready to start'}
+                    </p>
+                  </div>
+                  <div>
+                    {isDone ? (
+                      <div className="bg-emerald-500/10 text-emerald-500 p-2 rounded-full">
+                        <Check size={20} />
+                      </div>
+                    ) : isRunning ? (
+                      <button onClick={() => handleStopRoutine(idx, ex)} className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full cursor-pointer shadow-lg animate-pulse">
+                        <Pause size={20} />
+                      </button>
+                    ) : (
+                      <button onClick={() => handleStartRoutine(idx)} className="bg-[#27272a] hover:bg-[#3f3f46] text-white p-2 rounded-full cursor-pointer">
+                        <Play size={20} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Mode selector */}
       <div className="flex space-x-4">

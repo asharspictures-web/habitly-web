@@ -35,7 +35,7 @@ function App() {
       case 'pricing':
         return <PricingPage />;
       case 'exercise':
-        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} />;
+        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} />;
       case 'food':
         return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} />;
       case 'steps':
