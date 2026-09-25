@@ -32,37 +32,48 @@ export default function HomePage({ onNavigate }) {
       </div>
 
       {/* Hero Section */}
-      <div className="flex-1 flex flex-col justify-center text-center mt-10 mb-20 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-600/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="flex-1 flex flex-col justify-center items-center text-center mt-10 mb-20 relative py-16 px-4 rounded-3xl overflow-hidden border border-[#27272a]/50">
         
-        <div className="inline-flex items-center space-x-2 bg-[#27272a]/50 text-amber-500 border border-[#27272a] rounded-full px-4 py-1.5 text-sm font-bold mb-6">
-          <Sparkles size={16} />
-          <span>Now with Premium AI Coaching</span>
-        </div>
-        
-        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 leading-tight">
-          Master your habits with <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-800">Habitly Intelligence.</span>
-        </h1>
-        
-        <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The ultimate dark-mode dashboard for tracking your fitness journey. Log your workouts, meals, water, and sleep—then let our AI build your perfect routine.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-4 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-          >
-            <span>Enter Dashboard</span>
-            <ArrowRight size={20} />
-          </button>
-          <button 
-            onClick={() => onNavigate('pricing')}
-            className="w-full sm:w-auto bg-[#18181b] border border-[#27272a] hover:bg-[#27272a] text-white font-bold px-8 py-4 rounded-xl transition-all active:scale-95"
-          >
-            View Pricing
-          </button>
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center z-0" 
+          style={{ backgroundImage: 'url(/hero-bg.jpg)' }} 
+        />
+        {/* Dark Overlay (70-80% opacity) */}
+        <div className="absolute inset-0 bg-black/75 z-0" />
+
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-600/20 blur-[100px] rounded-full pointer-events-none" />
+          
+          <div className="inline-flex items-center space-x-2 bg-[#27272a]/80 text-amber-500 border border-[#27272a] rounded-full px-4 py-1.5 text-sm font-bold mb-6 backdrop-blur-md">
+            <Sparkles size={16} />
+            <span>Now with Premium AI Coaching</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 leading-tight drop-shadow-lg">
+            Master your habits with <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-800 drop-shadow-md">Habitly Intelligence.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-10 leading-relaxed drop-shadow">
+            The ultimate dark-mode dashboard for tracking your fitness journey. Log your workouts, meals, water, and sleep—then let our AI build your perfect routine.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 w-full">
+            <button 
+              onClick={() => onNavigate('dashboard')}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-4 rounded-xl flex items-center justify-center space-x-2 transition-all active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+            >
+              <span>Enter Dashboard</span>
+              <ArrowRight size={20} />
+            </button>
+            <button 
+              onClick={() => onNavigate('pricing')}
+              className="w-full sm:w-auto bg-[#18181b]/80 backdrop-blur-md border border-[#27272a] hover:bg-[#27272a] text-white font-bold px-8 py-4 rounded-xl transition-all active:scale-95"
+            >
+              View Pricing
+            </button>
+          </div>
         </div>
       </div>
 
