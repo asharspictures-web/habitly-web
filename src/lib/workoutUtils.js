@@ -30,6 +30,24 @@ export const NEW_WORKOUT_SCHEMA = {
   workouts: "array", // array of Workout objects defined below
 };
 
+export const EXERCISE_LIBRARY = {
+  categories: ['All', 'Beginner', 'Intermediate', 'Advanced', 'Cardiac Safe', 'Low Impact', 'Seniors (65+)'],
+  exercises: [
+    { name: 'Bicep Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Bench Press', level: 'Intermediate', tags: [] },
+    { name: 'Tricep Pushdown', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Squat', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Deadlift', level: 'Advanced', tags: [] },
+    { name: 'Overhead Press', level: 'Intermediate', tags: [] },
+    { name: 'Pull Up', level: 'Advanced', tags: [] },
+    { name: 'Row', level: 'Intermediate', tags: ['Low Impact'] },
+    { name: 'Lateral Raise', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Seated Leg Press', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Box Jump', level: 'Advanced', tags: [] },
+    { name: 'Wall Sit', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+  ]
+};
+
 /**
  * New per‑activity workout object schema.
  */

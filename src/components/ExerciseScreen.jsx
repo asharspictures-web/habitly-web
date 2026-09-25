@@ -1,21 +1,7 @@
 // src/components/ExerciseScreen.jsx
 import React, { useState, useEffect } from 'react';
 import { Activity, Clock, Plus, Flame, Play, Pause, Check } from 'lucide-react';
-import { validateWorkout, calculatePace, calculateCaloriesBurnt } from '../lib/workoutUtils.js';
-
-// Common exercise suggestions for autocomplete
-const EXERCISE_SUGGESTIONS = [
-  'Bicep Curl',
-  'Bench Press',
-  'Tricep Pushdown',
-  'Triceps Extension',
-  'Squat',
-  'Deadlift',
-  'Overhead Press',
-  'Pull Up',
-  'Row',
-  'Lateral Raise',
-];
+import { validateWorkout, calculatePace, calculateCaloriesBurnt, EXERCISE_LIBRARY } from '../lib/workoutUtils.js';
 
 // Activity options – each will render a different set of fields.
 const EXERCISE_TYPES = [
@@ -35,7 +21,12 @@ const EXERCISE_TYPES = [
 function ActivityForm({ activity, onChange, habits }) {
   const [exerciseName, setExerciseName] = useState(''); // for strength
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const filteredSuggestions = EXERCISE_SUGGESTIONS.filter(s => s.toLowerCase().includes(exerciseName.toLowerCase()));
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryFilter, setLibraryFilter] = useState('All');
+  const [librarySearch, setLibrarySearch] = useState('');
+  
+  const suggestionList = EXERCISE_LIBRARY.exercises.map(e => e.name);
+  const filteredSuggestions = suggestionList.filter(s => s.toLowerCase().includes(exerciseName.toLowerCase()));
   const [setType, setSetType] = useState('working'); // strength set type
   const [reps, setReps] = useState('');
   const [loadKg, setLoadKg] = useState('');
@@ -126,28 +117,39 @@ function ActivityForm({ activity, onChange, habits }) {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-1">Exercise Name</label>
-          <input
-            type="text"
-            value={exerciseName}
-            onChange={e => setExerciseName(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            className="w-full bg-[#09090b] border border-[#27272a] text-white p-2 rounded-xl focus:outline-none focus:border-red-500/50"
-            placeholder="e.g. Bench Press"
-          />
-          {showSuggestions && filteredSuggestions.length > 0 && (
-            <ul className="absolute bg-[#09090b] border border-[#27272a] mt-1 w-full rounded-md max-h-48 overflow-y-auto z-10">
-              {filteredSuggestions.map((s, i) => (
-                <li
-                  key={i}
-                  onMouseDown={() => { setExerciseName(s); setShowSuggestions(false); }}
-                  className="p-2 cursor-pointer hover:bg-red-500/20 text-white"
-                >
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={exerciseName}
+                onChange={e => setExerciseName(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full bg-[#09090b] border border-[#27272a] text-white p-2 rounded-xl focus:outline-none focus:border-red-500/50"
+                placeholder="e.g. Bench Press"
+              />
+              {showSuggestions && filteredSuggestions.length > 0 && (
+                <ul className="absolute bg-[#09090b] border border-[#27272a] mt-1 w-full rounded-md max-h-48 overflow-y-auto z-10 shadow-xl">
+                  {filteredSuggestions.map((s, i) => (
+                    <li
+                      key={i}
+                      onMouseDown={() => { setExerciseName(s); setShowSuggestions(false); }}
+                      className="p-2 cursor-pointer hover:bg-red-500/20 text-white transition-colors"
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLibrary(true)}
+              className="bg-[#27272a] hover:bg-[#3f3f46] text-white font-medium px-4 py-2 rounded-xl transition cursor-pointer flex-shrink-0"
+            >
+              Library
+            </button>
+          </div>
           {previousStats && (
             <div className="mt-2 p-2.5 bg-[#18181b] border border-[#27272a] rounded-xl flex items-center justify-between text-xs animate-in fade-in duration-300">
               <div className="flex items-center space-x-2">
@@ -206,6 +208,7 @@ function ActivityForm({ activity, onChange, habits }) {
             className="w-16 bg-[#09090b] border border-[#27272a] text-white p-2 rounded-xl focus:outline-none"
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-zinc-300 mb-1">Notes (optional)</label>
           <textarea
@@ -215,6 +218,83 @@ function ActivityForm({ activity, onChange, habits }) {
             rows={2}
           />
         </div>
+
+        {/* Library Modal */}
+        {showLibrary && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between pb-4 border-b border-[#27272a] mb-5 flex-shrink-0">
+                <div>
+                  <h3 className="text-xl font-black text-white">Exercise Library</h3>
+                  <p className="text-xs text-zinc-400 mt-1">Select an exercise or filter by category</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLibrary(false)}
+                  className="text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-[#27272a] transition cursor-pointer flex-shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex-shrink-0 space-y-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search library..."
+                  value={librarySearch}
+                  onChange={e => setLibrarySearch(e.target.value)}
+                  className="w-full bg-[#09090b] border border-[#27272a] text-white p-2 rounded-xl focus:outline-none focus:border-red-500/50"
+                />
+                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {EXERCISE_LIBRARY.categories.map(cat => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setLibraryFilter(cat)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                        libraryFilter === cat ? 'bg-red-600 text-white' : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+                {EXERCISE_LIBRARY.exercises
+                  .filter(e => libraryFilter === 'All' || e.level === libraryFilter || e.tags.includes(libraryFilter))
+                  .filter(e => e.name.toLowerCase().includes(librarySearch.toLowerCase()))
+                  .map((e, idx) => (
+                    <div 
+                      key={idx}
+                      onClick={() => { setExerciseName(e.name); setShowLibrary(false); }}
+                      className="bg-[#09090b] border border-[#27272a] hover:border-red-500/50 rounded-xl p-3 flex justify-between items-center cursor-pointer group transition"
+                    >
+                      <div>
+                        <p className="font-semibold text-white group-hover:text-red-400 transition-colors">{e.name}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                            e.level === 'Beginner' ? 'text-green-500 bg-green-500/10' :
+                            e.level === 'Intermediate' ? 'text-yellow-500 bg-yellow-500/10' :
+                            'text-orange-500 bg-orange-500/10'
+                          }`}>
+                            {e.level}
+                          </span>
+                          {e.tags.map(t => (
+                            <span key={t} className="text-[10px] uppercase font-bold text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <Plus size={16} className="text-zinc-500 group-hover:text-red-500 transition-colors" />
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
