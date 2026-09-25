@@ -7,6 +7,12 @@ const DEFAULT_GOALS = {
   workout: 30, // minutes
   currentWeight: 75, // kg
   targetWeight: 70, // kg
+  age: 30,
+  height: 170, // cm
+  gender: 'female',
+  activityLevel: 'sedentary',
+  healthConditions: '',
+  dietaryPreferences: 'none',
 };
 
 export function useHabits() {

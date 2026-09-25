@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale } from 'lucide-react';
+import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale, ChevronRight, Sparkles } from 'lucide-react';
 
 export default function GoalsScreen({ goals, updateGoals }) {
   const [localGoals, setLocalGoals] = useState(goals);
@@ -8,6 +8,10 @@ export default function GoalsScreen({ goals, updateGoals }) {
   const [bmrResult, setBmrResult] = useState(null);
   const [macroResult, setMacroResult] = useState(null);
   const [bfResult, setBfResult] = useState(null);
+
+  // Premium Onboarding State
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
 
   const handleSaveGoals = (e) => {
     e.preventDefault();
@@ -147,32 +151,20 @@ export default function GoalsScreen({ goals, updateGoals }) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-zinc-300">
-                  <Scale size={16} className="text-zinc-400 mr-2" /> Current Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  value={localGoals.currentWeight || ''}
-                  onChange={e => setLocalGoals({...localGoals, currentWeight: Number(e.target.value)})}
-                  className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50"
-                  min="20" step="0.1"
-                />
-              </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center text-sm font-semibold text-zinc-300">
-                  <Target size={16} className="text-red-500 mr-2" /> Target Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  value={localGoals.targetWeight || ''}
-                  onChange={e => setLocalGoals({...localGoals, targetWeight: Number(e.target.value)})}
-                  className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50"
-                  min="20" step="0.1"
-                />
+            <div 
+              onClick={() => { setIsPremiumModalOpen(true); setWizardStep(1); }}
+              className="bg-gradient-to-r from-red-900/40 to-red-600/10 border border-red-500/30 rounded-xl p-5 cursor-pointer hover:border-red-500/60 transition group flex items-center justify-between"
+            >
+              <div>
+                <h4 className="text-white font-bold flex items-center">
+                  <Sparkles size={16} className="text-red-400 mr-2" />
+                  Personalized Weight Plan <span className="ml-2 text-[10px] uppercase font-black tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded">Premium</span>
+                </h4>
+                <p className="text-zinc-400 text-sm mt-1">Set your weight goal and generate a custom nutrition & workout plan.</p>
               </div>
-
+              <ChevronRight className="text-zinc-500 group-hover:text-red-400 transition" />
             </div>
 
             <button 
@@ -244,6 +236,140 @@ export default function GoalsScreen({ goals, updateGoals }) {
         <Lock size={14} className="mr-2" />
         <span>Your data stays private.</span>
       </div>
+
+      {/* Premium Onboarding Modal */}
+      {isPremiumModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button 
+              onClick={() => setIsPremiumModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-500 hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="flex items-center space-x-2 mb-6">
+              <Sparkles className="text-red-500" size={24} />
+              <h3 className="text-2xl font-black text-white">Personalized Plan</h3>
+            </div>
+            
+            {wizardStep === 1 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-zinc-400 mb-6">Let's start by setting a safe, achievable weight goal. We'll use this to build your custom nutrition and workout plan.</p>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Current Weight (kg)</label>
+                  <input type="number" value={localGoals.currentWeight || ''} onChange={e => setLocalGoals({...localGoals, currentWeight: Number(e.target.value)})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Target Weight (kg)</label>
+                  <input type="number" value={localGoals.targetWeight || ''} onChange={e => setLocalGoals({...localGoals, targetWeight: Number(e.target.value)})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
+                </div>
+                
+                <button type="button" onClick={() => setWizardStep(2)} className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl mt-4 transition-colors">Next Step</button>
+              </div>
+            )}
+            
+            {wizardStep === 2 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-zinc-400 mb-6">Tell us a bit about yourself to help tailor your calories.</p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Age</label>
+                    <input type="number" value={localGoals.age || ''} onChange={e => setLocalGoals({...localGoals, age: Number(e.target.value)})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Height (cm)</label>
+                    <input type="number" value={localGoals.height || ''} onChange={e => setLocalGoals({...localGoals, height: Number(e.target.value)})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Gender</label>
+                  <select value={localGoals.gender || 'female'} onChange={e => setLocalGoals({...localGoals, gender: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+                
+                <div className="flex space-x-3 mt-4">
+                  <button type="button" onClick={() => setWizardStep(1)} className="flex-1 bg-[#27272a] text-white font-bold py-3 rounded-xl transition-colors">Back</button>
+                  <button type="button" onClick={() => setWizardStep(3)} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-colors">Next Step</button>
+                </div>
+              </div>
+            )}
+            
+            {wizardStep === 3 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-zinc-400 mb-6">How active are you during a typical week?</p>
+                
+                <div className="space-y-2">
+                  {[
+                    { id: 'sedentary', label: 'Sedentary', desc: 'Little to no exercise, desk job' },
+                    { id: 'lightly_active', label: 'Lightly Active', desc: 'Light exercise 1-3 days/week' },
+                    { id: 'moderately_active', label: 'Moderately Active', desc: 'Moderate exercise 3-5 days/week' },
+                    { id: 'very_active', label: 'Very Active', desc: 'Hard exercise 6-7 days/week' }
+                  ].map(opt => (
+                    <div 
+                      key={opt.id}
+                      onClick={() => setLocalGoals({...localGoals, activityLevel: opt.id})}
+                      className={`p-3 border rounded-xl cursor-pointer transition-colors ${localGoals.activityLevel === opt.id ? 'bg-red-500/10 border-red-500 text-white' : 'bg-[#09090b] border-[#27272a] text-zinc-400 hover:border-[#3f3f46]'}`}
+                    >
+                      <p className="font-bold">{opt.label}</p>
+                      <p className="text-xs opacity-70">{opt.desc}</p>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex space-x-3 mt-4">
+                  <button type="button" onClick={() => setWizardStep(2)} className="flex-1 bg-[#27272a] text-white font-bold py-3 rounded-xl transition-colors">Back</button>
+                  <button type="button" onClick={() => setWizardStep(4)} className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-colors">Next Step</button>
+                </div>
+              </div>
+            )}
+            
+            {wizardStep === 4 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-zinc-400 mb-6">Any final health or dietary preferences we should know about?</p>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Injuries or Health Conditions (Optional)</label>
+                  <input type="text" placeholder="e.g. Bad knees, Cardiac Safe" value={localGoals.healthConditions || ''} onChange={e => setLocalGoals({...localGoals, healthConditions: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Dietary Preference</label>
+                  <select value={localGoals.dietaryPreferences || 'none'} onChange={e => setLocalGoals({...localGoals, dietaryPreferences: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50">
+                    <option value="none">None</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="vegan">Vegan</option>
+                    <option value="allergies">Allergies (Nut, Dairy, etc.)</option>
+                  </select>
+                </div>
+                
+                <div className="flex space-x-3 mt-4">
+                  <button type="button" onClick={() => setWizardStep(3)} className="flex-1 bg-[#27272a] text-white font-bold py-3 rounded-xl transition-colors">Back</button>
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      handleSaveGoals(e);
+                      setIsPremiumModalOpen(false);
+                    }} 
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors"
+                  >
+                    Save & Generate Plan
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <p className="text-[10px] text-zinc-500 text-center mt-6 uppercase tracking-wider font-bold flex items-center justify-center">
+              <Lock size={10} className="mr-1" /> Premium Feature Preview
+            </p>
+          </div>
+        </div>
+      )}
 
     </div>
   );
