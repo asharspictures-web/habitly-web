@@ -33,18 +33,74 @@ export const NEW_WORKOUT_SCHEMA = {
 export const EXERCISE_LIBRARY = {
   categories: ['All', 'Beginner', 'Intermediate', 'Advanced', 'Cardiac Safe', 'Low Impact', 'Seniors (65+)'],
   exercises: [
-    { name: 'Bicep Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    // Chest
     { name: 'Bench Press', level: 'Intermediate', tags: [] },
-    { name: 'Tricep Pushdown', level: 'Beginner', tags: ['Low Impact'] },
-    { name: 'Squat', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Incline Bench Press', level: 'Intermediate', tags: [] },
+    { name: 'Decline Bench Press', level: 'Intermediate', tags: [] },
+    { name: 'Dumbbell Flyes', level: 'Intermediate', tags: [] },
+    { name: 'Push Up', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Knee Push Up', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Cable Crossover', level: 'Intermediate', tags: ['Low Impact'] },
+    { name: 'Chest Press Machine', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Pec Deck Machine', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+
+    // Back
     { name: 'Deadlift', level: 'Advanced', tags: [] },
-    { name: 'Overhead Press', level: 'Intermediate', tags: [] },
     { name: 'Pull Up', level: 'Advanced', tags: [] },
-    { name: 'Row', level: 'Intermediate', tags: ['Low Impact'] },
+    { name: 'Chin Up', level: 'Intermediate', tags: [] },
+    { name: 'Lat Pulldown', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Seated Cable Row', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Barbell Row', level: 'Intermediate', tags: [] },
+    { name: 'Dumbbell Row', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'T-Bar Row', level: 'Intermediate', tags: [] },
+    { name: 'Back Extension', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Face Pull', level: 'Beginner', tags: ['Low Impact', 'Cardiac Safe'] },
+
+    // Shoulders
+    { name: 'Overhead Press', level: 'Intermediate', tags: [] },
+    { name: 'Dumbbell Shoulder Press', level: 'Intermediate', tags: [] },
     { name: 'Lateral Raise', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
-    { name: 'Seated Leg Press', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Front Raise', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Reverse Pec Deck', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Upright Row', level: 'Intermediate', tags: [] },
+    { name: 'Shrugs', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Arnold Press', level: 'Intermediate', tags: [] },
+
+    // Arms (Biceps/Triceps)
+    { name: 'Bicep Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Hammer Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Preacher Curl', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Tricep Pushdown', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Overhead Tricep Extension', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Skull Crusher', level: 'Intermediate', tags: [] },
+    { name: 'Tricep Kickback', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Tricep Dips', level: 'Intermediate', tags: [] },
+
+    // Legs (Quads/Hamstrings/Calves/Glutes)
+    { name: 'Squat', level: 'Intermediate', tags: [] },
+    { name: 'Front Squat', level: 'Advanced', tags: [] },
+    { name: 'Goblet Squat', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Leg Press', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Leg Extension', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Lying Leg Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Seated Leg Curl', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Romanian Deadlift (RDL)', level: 'Intermediate', tags: [] },
+    { name: 'Lunges', level: 'Beginner', tags: [] },
+    { name: 'Bulgarian Split Squat', level: 'Advanced', tags: [] },
+    { name: 'Calf Raise', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+    { name: 'Hip Thrust', level: 'Intermediate', tags: ['Low Impact'] },
+    { name: 'Glute Bridge', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
     { name: 'Box Jump', level: 'Advanced', tags: [] },
     { name: 'Wall Sit', level: 'Beginner', tags: ['Cardiac Safe', 'Low Impact', 'Seniors (65+)'] },
+
+    // Core
+    { name: 'Crunch', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Plank', level: 'Beginner', tags: ['Low Impact'] },
+    { name: 'Russian Twist', level: 'Intermediate', tags: [] },
+    { name: 'Leg Raise', level: 'Intermediate', tags: ['Low Impact'] },
+    { name: 'Ab Wheel Rollout', level: 'Advanced', tags: [] },
+    { name: 'Cable Woodchopper', level: 'Intermediate', tags: [] },
+    { name: 'Bicycle Crunch', level: 'Beginner', tags: ['Low Impact'] },
   ]
 };
 
