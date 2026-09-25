@@ -381,7 +381,7 @@ function ActivityForm({ activity, onChange, habits }) {
   );
 }
 
-export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals, updateGoals }) {
+export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals, updateGoals, showAlert, showConfirm }) {
   const [mode, setMode] = useState('static'); // 'static' | 'live'
   const [selectedActivity, setSelectedActivity] = useState('Strength Training');
   const [currentWorkout, setCurrentWorkout] = useState({ activity: selectedActivity });
@@ -402,7 +402,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
   const handleAddLiveExercise = () => {
     const errors = validateWorkout(currentWorkout);
     if (errors.length) {
-      alert('Please fix: ' + errors.join(', '));
+      showAlert('Please fix: ' + errors.join(', '));
       return;
     }
     const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
@@ -422,7 +422,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
     }
 
     if (exercisesToSave.length === 0) {
-      alert('No exercises added to this session. Please fill out the form or click "Add Exercise".');
+      showAlert('No exercises added to this session. Please fill out the form or click "Add Exercise".');
       return;
     }
 
@@ -451,7 +451,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
     e.preventDefault();
     const errors = validateWorkout(currentWorkout);
     if (errors.length) {
-      alert('Please fix: ' + errors.join(', '));
+      showAlert('Please fix: ' + errors.join(', '));
       return;
     }
     const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout), sessionId: Date.now() };

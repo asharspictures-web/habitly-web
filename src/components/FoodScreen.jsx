@@ -7,7 +7,7 @@ import { COMMON_FOODS } from '../lib/foodUtils';
 
 const CATEGORIES = ['All', 'Indian', 'International', 'Healthy', 'Quick Snacks'];
 
-export default function FoodScreen({ habits = [], onSave, onRemove }) {
+export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, showConfirm }) {
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -180,7 +180,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove }) {
 
   const toggleListen = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Speech recognition not supported in this browser.");
+      showAlert("Speech recognition not supported in this browser.");
       return;
     }
 

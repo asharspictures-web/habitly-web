@@ -28,6 +28,13 @@ function App() {
   const [currentView, setCurrentView] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [modalConfig, setModalConfig] = useState(null);
+
+  const showAlert = (message) => setModalConfig({ type: 'alert', message });
+  const showConfirm = (message, onConfirm, onCancel, confirmText, cancelText) => {
+    setModalConfig({ type: 'confirm', message, onConfirm, onCancel, confirmText, cancelText });
+  };
+
   const renderScreen = () => {
     switch (currentView) {
       case 'home':
@@ -35,17 +42,17 @@ function App() {
       case 'pricing':
         return <PricingPage />;
       case 'exercise':
-        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} />;
+        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'food':
-        return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} />;
+        return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
-        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} />;
+        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':
-        return <AIAssistantScreen habits={habits} onLogFood={addFood} />;
+        return <AIAssistantScreen habits={habits} onLogFood={addFood} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'dashboard':
       default:
         return (
@@ -78,6 +85,39 @@ function App() {
           {renderScreen()}
         </main>
       </div>
+
+      {/* Global Alert / Confirm Modal */}
+      {modalConfig && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <h3 className="text-lg font-bold text-white mb-4">{modalConfig.type === 'confirm' ? 'Confirm' : 'Notice'}</h3>
+            <p className="text-sm text-zinc-300 mb-6 leading-relaxed whitespace-pre-wrap">{modalConfig.message}</p>
+            
+            <div className="flex space-x-3 justify-end">
+              {modalConfig.type === 'confirm' && (
+                <button
+                  onClick={() => {
+                    setModalConfig(null);
+                    if (modalConfig.onCancel) modalConfig.onCancel();
+                  }}
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-[#27272a] text-white hover:bg-[#3f3f46] transition-colors"
+                >
+                  {modalConfig.cancelText || 'Cancel'}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setModalConfig(null);
+                  if (modalConfig.onConfirm) modalConfig.onConfirm();
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                {modalConfig.confirmText || 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

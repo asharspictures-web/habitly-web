@@ -3,7 +3,7 @@ import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale, 
 import { COMMON_FOODS } from '../lib/foodUtils';
 import { EXERCISE_LIBRARY } from '../lib/workoutUtils';
 
-export default function GoalsScreen({ goals, updateGoals, addFood }) {
+export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, showConfirm }) {
   const [localGoals, setLocalGoals] = useState(goals);
   
   // Calculators State
@@ -301,7 +301,7 @@ export default function GoalsScreen({ goals, updateGoals, addFood }) {
                         <button 
                           onClick={() => {
                             addFood({ ...food, timestamp: new Date().toISOString() });
-                            alert(`Added ${food.name} to today's log!`);
+                            showAlert(`Added ${food.name} to today's log!`);
                           }}
                           className="bg-[#27272a] hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
                         >
@@ -334,7 +334,7 @@ export default function GoalsScreen({ goals, updateGoals, addFood }) {
                       <button 
                         onClick={() => {
                           updateGoals({ ...goals, activeRoutine: premiumPlan.suggestedWorkout });
-                          alert('Routine exported! Go to the Exercise tab to start your workout.');
+                          showAlert('Routine exported! Go to the Exercise tab to start your workout.');
                         }}
                         className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
                       >
