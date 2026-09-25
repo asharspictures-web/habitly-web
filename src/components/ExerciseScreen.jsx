@@ -332,10 +332,20 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
   };
 
   const handleFinishLive = () => {
-    if (liveExercises.length === 0) {
-      alert('No exercises added to this session.');
+    let exercisesToSave = [...liveExercises];
+    
+    // If the user filled out the form but forgot to click "Add Exercise", auto-add it if valid
+    const errors = validateWorkout(currentWorkout);
+    if (errors.length === 0) {
+      const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
+      exercisesToSave.push(withCalories);
+    }
+
+    if (exercisesToSave.length === 0) {
+      alert('No exercises added to this session. Please fill out the form or click "Add Exercise".');
       return;
     }
+
     // Optionally add a generic entry for the total session time
     const sessionWorkout = {
       activity: 'Other',
@@ -343,13 +353,15 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
       timeMinutes: Math.round(timerSec / 60),
       calories: 0 // calories are already accounted for in individual exercises
     };
-    liveExercises.forEach(w => onSave(w));
+    
+    exercisesToSave.forEach(w => onSave(w));
     onSave(sessionWorkout); // Save the total elapsed time separately
     
     setLiveExercises([]);
     setTimerSec(0);
     setTimerRunning(false);
     setMode('static');
+    setFormResetKey(prev => prev + 1);
   };
 
   const handleStaticSubmit = e => {
