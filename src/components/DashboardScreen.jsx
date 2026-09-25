@@ -170,7 +170,7 @@ export default function DashboardScreen({
       </div>
 
       {/* Comparison Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl flex items-center justify-between">
           <div>
             <p className="text-zinc-400 text-sm font-semibold">Sleep Avg</p>
@@ -202,6 +202,20 @@ export default function DashboardScreen({
           <div>
             <p className="text-zinc-400 text-sm font-semibold">Cal Burnt Today</p>
             <p className="text-2xl font-black text-red-400 mt-1">{ (todayData.workouts || []).reduce((acc, w) => acc + (w.calories || 0), 0) } <span className="text-sm font-medium text-zinc-500">kcal</span></p>
+          </div>
+        </div>
+        <div className="bg-[#18181b] border border-[#27272a] p-5 rounded-2xl flex items-center justify-between">
+          <div>
+            <p className="text-zinc-400 text-sm font-semibold">Weight Goal</p>
+            <p className="text-2xl font-black text-white mt-1">{goals.currentWeight || '--'} <span className="text-sm font-medium text-zinc-500">kg</span></p>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-xs text-zinc-400 font-medium">Target: {goals.targetWeight || '--'}</span>
+            {goals.currentWeight && goals.targetWeight && (
+              <span className="text-xs font-bold mt-1 text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                {Math.abs(goals.currentWeight - goals.targetWeight).toFixed(1)} kg to go
+              </span>
+            )}
           </div>
         </div>
       </div>

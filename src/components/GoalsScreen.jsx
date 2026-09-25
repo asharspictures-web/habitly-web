@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell } from 'lucide-react';
+import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale } from 'lucide-react';
 
 export default function GoalsScreen({ goals, updateGoals }) {
   const [localGoals, setLocalGoals] = useState(goals);
@@ -144,6 +144,32 @@ export default function GoalsScreen({ goals, updateGoals }) {
                   onChange={e => setLocalGoals({...localGoals, workout: Number(e.target.value)})}
                   className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50"
                   min="5" step="5"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-semibold text-zinc-300">
+                  <Scale size={16} className="text-zinc-400 mr-2" /> Current Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  value={localGoals.currentWeight || ''}
+                  onChange={e => setLocalGoals({...localGoals, currentWeight: Number(e.target.value)})}
+                  className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50"
+                  min="20" step="0.1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center text-sm font-semibold text-zinc-300">
+                  <Target size={16} className="text-red-500 mr-2" /> Target Weight (kg)
+                </label>
+                <input
+                  type="number"
+                  value={localGoals.targetWeight || ''}
+                  onChange={e => setLocalGoals({...localGoals, targetWeight: Number(e.target.value)})}
+                  className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50"
+                  min="20" step="0.1"
                 />
               </div>
 

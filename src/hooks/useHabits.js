@@ -4,7 +4,9 @@ const DEFAULT_GOALS = {
   water: 8, // glasses
   sleep: 8, // hours
   steps: 10000,
-  workout: 30 // minutes
+  workout: 30, // minutes
+  currentWeight: 75, // kg
+  targetWeight: 70, // kg
 };
 
 export function useHabits() {
