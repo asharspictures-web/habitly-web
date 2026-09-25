@@ -440,6 +440,12 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
 
   const [selectedSession, setSelectedSession] = useState(null);
 
+  const formatTimer = sec => {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 relative">
       {/* Header */}
