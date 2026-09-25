@@ -346,15 +346,18 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
       return;
     }
 
+    const sessionId = Date.now();
+
     // Optionally add a generic entry for the total session time
     const sessionWorkout = {
+      sessionId,
       activity: 'Other',
       notes: `Live Session Total Elapsed Time`,
       timeMinutes: Math.round(timerSec / 60),
       calories: 0 // calories are already accounted for in individual exercises
     };
     
-    exercisesToSave.forEach(w => onSave(w));
+    exercisesToSave.forEach(w => onSave({ ...w, sessionId }));
     onSave(sessionWorkout); // Save the total elapsed time separately
     
     setLiveExercises([]);
@@ -371,27 +374,74 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
       alert('Please fix: ' + errors.join(', '));
       return;
     }
-    const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
+    const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout), sessionId: Date.now() };
     onSave(withCalories);
     setCurrentWorkout({ activity: selectedActivity });
     setFormResetKey(prev => prev + 1);
   };
 
-  // Inject the date from the parent habit record so we can display it correctly
-  const allWorkouts = habits.flatMap(h => (h.workouts || []).map(w => ({ ...w, date: h.date })));
-  const filteredWorkouts = searchQuery.trim()
-    ? allWorkouts.filter(w => (w.activity || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
-    : allWorkouts;
-  const recentWorkouts = [...filteredWorkouts].reverse().slice(0, 5);
+  // Group workouts into sessions
+  const sessions = [];
+  
+  habits.forEach(h => {
+    if (!h.workouts || h.workouts.length === 0) return;
+    
+    // Group this day's workouts
+    const groups = {};
+    h.workouts.forEach(w => {
+      // Use sessionId if available, otherwise fallback to date + activity (for older logs)
+      const key = w.sessionId ? w.sessionId : `${h.date}-${w.activity}`;
+      if (!groups[key]) {
+        groups[key] = {
+          id: key,
+          date: h.date,
+          // If the group contains multiple activities (e.g. live session), pick the first real one
+          activity: w.activity !== 'Other' ? w.activity : 'Live Session',
+          workouts: [],
+          totalDistance: 0,
+          totalTime: 0,
+          totalReps: 0,
+          totalSets: 0,
+          totalCalories: 0,
+        };
+      }
+      
+      // Update activity name if we encounter a non-Other activity
+      if (groups[key].activity === 'Live Session' && w.activity !== 'Other') {
+        groups[key].activity = w.activity;
+      }
+      
+      groups[key].workouts.push(w);
+      if (w.distanceKm) groups[key].totalDistance += w.distanceKm;
+      if (w.timeMinutes) groups[key].totalTime += w.timeMinutes;
+      if (w.reps) {
+        groups[key].totalReps += w.reps;
+        if (w.activity === 'Strength Training') groups[key].totalSets += 1;
+      }
+      if (w.calories) groups[key].totalCalories += w.calories;
+    });
 
-  const formatTimer = sec => {
-    const m = String(Math.floor(sec / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    return `${m}:${s}`;
-  };
+    Object.values(groups).forEach(g => sessions.push(g));
+  });
+
+  // Sort sessions by date and ID (newest first)
+  sessions.sort((a, b) => {
+    const dateDiff = new Date(b.date) - new Date(a.date);
+    if (dateDiff !== 0) return dateDiff;
+    // If same date and they have numeric sessionIds, sort by ID descending
+    if (typeof b.id === 'number' && typeof a.id === 'number') return b.id - a.id;
+    return 0;
+  });
+
+  const filteredSessions = searchQuery.trim()
+    ? sessions.filter(s => s.activity.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    : sessions;
+  const recentSessions = filteredSessions.slice(0, 5);
+
+  const [selectedSession, setSelectedSession] = useState(null);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 relative">
       {/* Header */}
       <div className="relative overflow-hidden rounded-3xl border border-[#27272a] shadow-xl p-8">
         <div className="absolute inset-0 bg-[url('/hero-bg.jpg')] bg-cover bg-center opacity-25" />
@@ -414,14 +464,14 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
         <button
           type="button"
           onClick={() => setMode('static')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${mode === 'static' ? 'bg-red-600 text-white' : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${mode === 'static' ? 'bg-red-600 text-white' : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'}`}
         >
           Log Completed Workout
         </button>
         <button
           type="button"
           onClick={() => { setMode('live'); setTimerRunning(true); }}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${mode === 'live' ? 'bg-red-600 text-white' : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${mode === 'live' ? 'bg-red-600 text-white' : 'bg-[#27272a] text-zinc-400 hover:text-white hover:bg-[#3f3f46]'}`}
         >
           Start Workout
         </button>
@@ -435,7 +485,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
             <button
               type="button"
               onClick={() => setTimerRunning(r => !r)}
-              className="text-red-500 hover:text-red-300"
+              className="text-red-500 hover:text-red-300 cursor-pointer"
             >
               {timerRunning ? <Pause size={20} /> : <Play size={20} />}
             </button>
@@ -462,7 +512,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
             <button
               type="button"
               onClick={handleAddLiveExercise}
-              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl flex items-center justify-center space-x-2"
+              className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-xl flex items-center justify-center space-x-2 cursor-pointer"
             >
               <Plus size={16} />
               <span>Add Exercise</span>
@@ -470,7 +520,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
             <button
               type="button"
               onClick={handleFinishLive}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl flex items-center justify-center space-x-2"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl flex items-center justify-center space-x-2 cursor-pointer"
             >
               <Check size={16} />
               <span>Finish Session</span>
@@ -513,7 +563,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
           <button
             type="submit"
             onClick={handleStaticSubmit}
-            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center space-x-2"
+            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Plus size={20} />
             <span>Save Workout</span>
@@ -532,33 +582,39 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
           )}
         </div>
         <div className="space-y-3">
-          {recentWorkouts.length > 0 ? (
-            recentWorkouts.map((w, i) => (
-              <div key={i} className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 flex items-center justify-between">
+          {recentSessions.length > 0 ? (
+            recentSessions.map((s, i) => (
+              <div 
+                key={i} 
+                onClick={() => setSelectedSession(s)}
+                className="bg-[#18181b] border border-[#27272a] hover:border-red-500/50 rounded-xl p-4 flex items-center justify-between cursor-pointer transition group"
+              >
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-[#27272a] flex items-center justify-center text-red-500">
+                  <div className="w-10 h-10 rounded-full bg-[#27272a] group-hover:bg-red-500/10 flex items-center justify-center text-red-500 transition">
                     <Activity size={18} />
                   </div>
                   <div>
                     <p className="font-semibold text-white">
-                      {w.activity}{w.exerciseName ? ` - ${w.exerciseName}` : ''}
+                      {s.activity} Session
                     </p>
                     <p className="text-xs text-zinc-500">
-                      {new Date(w.date || new Date()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {new Date(s.date || new Date()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
                 <div className="text-right text-sm text-zinc-400">
-                  {w.distanceKm && <span className="block">{w.distanceKm} km </span>}
-                  {w.timeMinutes && <span className="block">{w.timeMinutes} min </span>}
-                  {w.reps && (
-                    <span className="block">
-                      {w.reps} reps
-                      {w.loadKg ? ` @ ${w.loadKg}kg` : ''}
-                      {w.loadLb ? ` @ ${w.loadLb}lb` : ''}
-                    </span>
+                  {s.activity === 'Strength Training' ? (
+                    <>
+                      <span className="block">{s.workouts.filter(w => w.exerciseName).length} exercises</span>
+                      <span className="block">{s.totalSets} sets</span>
+                    </>
+                  ) : (
+                    <>
+                      {s.totalDistance > 0 && <span className="block">{s.totalDistance.toFixed(2)} km</span>}
+                      {s.totalTime > 0 && <span className="block">{s.totalTime} min</span>}
+                    </>
                   )}
-                  {w.calories && <span className="block text-red-400 font-medium">{w.calories} kcal</span>}
+                  {s.totalCalories > 0 && <span className="block text-red-400 font-medium">{s.totalCalories} kcal</span>}
                 </div>
               </div>
             ))
@@ -569,6 +625,54 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
           )}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedSession && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-[#27272a] mb-5 flex-shrink-0">
+              <div>
+                <h3 className="text-xl font-black text-white">{selectedSession.activity} Session</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  {new Date(selectedSession.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedSession(null)}
+                className="text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-[#27272a] transition cursor-pointer flex-shrink-0"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+              {selectedSession.workouts.map((w, idx) => (
+                <div key={idx} className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-white text-sm">
+                      {w.activity === 'Other' && w.notes ? w.notes : (w.exerciseName || w.activity)}
+                    </p>
+                    {w.setType && w.activity === 'Strength Training' && (
+                      <span className="text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">{w.setType}</span>
+                    )}
+                  </div>
+                  <div className="text-right text-xs text-zinc-400 space-y-0.5">
+                    {w.reps && <span className="block">{w.reps} reps {w.loadKg ? `@ ${w.loadKg}kg` : ''} {w.loadLb ? `@ ${w.loadLb}lb` : ''}</span>}
+                    {w.distanceKm && <span className="block">{w.distanceKm} km</span>}
+                    {w.timeMinutes && <span className="block">{w.timeMinutes} min</span>}
+                    {w.calories > 0 && <span className="block text-red-400 font-medium">{w.calories} kcal</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#27272a] flex justify-between text-sm text-zinc-300 flex-shrink-0">
+              <span className="font-semibold text-zinc-500 uppercase tracking-wider text-xs">Total Burn</span>
+              <span className="font-black text-red-500">{selectedSession.totalCalories} kcal</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
