@@ -51,6 +51,11 @@ export default function FoodScreen({ habits = [], onSave }) {
   const [photoPreview, setPhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Quantity Modal state
+  const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
+  const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState(null);
+  const [foodQuantity, setFoodQuantity] = useState(1);
+
   const todayStr = new Date().toISOString().split('T')[0];
   const todayData = (Array.isArray(habits) ? habits : []).find(h => h.date === todayStr) || { foods: [] };
   const foods = todayData.foods || [];
@@ -70,12 +75,9 @@ export default function FoodScreen({ habits = [], onSave }) {
   ].filter(d => d.value > 0);
 
   const handleQuickAdd = (food) => {
-    onSave({
-      ...food,
-      text: food.name,
-      date: todayStr,
-      timestamp: new Date().toISOString()
-    });
+    setSelectedFoodForQuantity(food);
+    setFoodQuantity(1);
+    setIsQuantityModalOpen(true);
   };
 
   const handleAIAssist = async (e) => {
@@ -87,19 +89,42 @@ export default function FoodScreen({ habits = [], onSave }) {
 
     const nutrition = parseFoodFromQuery(inputText);
 
-    onSave({
+    setSelectedFoodForQuantity({
       name: nutrition.foodName,
       text: nutrition.foodName,
       cal: nutrition.cal,
       p: nutrition.p,
       c: nutrition.c,
       f: nutrition.f,
-      date: todayStr,
-      timestamp: new Date().toISOString()
+      icon: '✨'
     });
+    setFoodQuantity(1);
+    setIsQuantityModalOpen(true);
 
     setInputText('');
     setIsProcessing(false);
+  };
+
+  const confirmQuantityAndSave = (e) => {
+    if (e) e.preventDefault();
+    if (!selectedFoodForQuantity) return;
+    
+    const q = Math.max(0.1, parseFloat(foodQuantity) || 1);
+    
+    onSave({
+      ...selectedFoodForQuantity,
+      text: selectedFoodForQuantity.name,
+      cal: Math.round(selectedFoodForQuantity.cal * q),
+      p: Math.round(selectedFoodForQuantity.p * q),
+      c: Math.round(selectedFoodForQuantity.c * q),
+      f: Math.round(selectedFoodForQuantity.f * q),
+      quantity: q,
+      date: todayStr,
+      timestamp: new Date().toISOString()
+    });
+    
+    setIsQuantityModalOpen(false);
+    setSelectedFoodForQuantity(null);
   };
 
   const handlePhotoUpload = (e) => {
@@ -620,6 +645,85 @@ export default function FoodScreen({ habits = [], onSave }) {
                 >
                   <Upload size={16} />
                   <span>Save Food Entry</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quantity Modal */}
+      {isQuantityModalOpen && selectedFoodForQuantity && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <div className="flex items-center justify-between pb-4 border-b border-[#27272a] mb-5">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-xl">
+                  {selectedFoodForQuantity.icon || '🍽️'}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-bold text-white truncate max-w-[200px]">{selectedFoodForQuantity.name}</h3>
+                  <p className="text-xs text-zinc-400">Specify serving size</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsQuantityModalOpen(false)}
+                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-[#27272a] transition cursor-pointer flex-shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={confirmQuantityAndSave} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-zinc-300 mb-2">
+                  Number of Servings
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    required
+                    value={foodQuantity}
+                    onChange={e => setFoodQuantity(e.target.value)}
+                    className="w-full bg-[#09090b] border border-[#27272a] text-white px-4 py-3 rounded-xl focus:outline-none focus:border-red-500/50 text-center font-bold text-lg"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-4">
+                <p className="text-xs text-zinc-500 mb-2 font-semibold uppercase tracking-wider text-center">Total Estimated Macros</p>
+                <div className="flex justify-between items-center text-sm">
+                  <div className="text-center">
+                    <span className="block text-red-400 font-bold">{Math.round(selectedFoodForQuantity.cal * (parseFloat(foodQuantity) || 1))}</span>
+                    <span className="text-zinc-500 text-[10px] uppercase">kcal</span>
+                  </div>
+                  <div className="w-px h-8 bg-[#27272a]"></div>
+                  <div className="text-center">
+                    <span className="block text-white font-bold">{Math.round((selectedFoodForQuantity.p || 0) * (parseFloat(foodQuantity) || 1))}g</span>
+                    <span className="text-zinc-500 text-[10px] uppercase">Protein</span>
+                  </div>
+                  <div className="w-px h-8 bg-[#27272a]"></div>
+                  <div className="text-center">
+                    <span className="block text-white font-bold">{Math.round((selectedFoodForQuantity.c || 0) * (parseFloat(foodQuantity) || 1))}g</span>
+                    <span className="text-zinc-500 text-[10px] uppercase">Carbs</span>
+                  </div>
+                  <div className="w-px h-8 bg-[#27272a]"></div>
+                  <div className="text-center">
+                    <span className="block text-white font-bold">{Math.round((selectedFoodForQuantity.f || 0) * (parseFloat(foodQuantity) || 1))}g</span>
+                    <span className="text-zinc-500 text-[10px] uppercase">Fat</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-red-600 hover:bg-red-500 text-white py-3.5 rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(239,68,68,0.25)] flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <Plus size={18} />
+                  <span>Log Food</span>
                 </button>
               </div>
             </form>
