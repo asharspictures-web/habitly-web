@@ -114,17 +114,21 @@ function App() {
   return (
     <ErrorBoundary>
       <div className="flex h-screen bg-[#09090b] text-white overflow-hidden font-sans">
-        <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+        {currentView !== 'home' && (
+          <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+        )}
         
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
-          <TopBar 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            habits={habits}
-            setCurrentView={setCurrentView}
-            tier={tier}
-            updateTier={updateTier}
-          />
+          {currentView !== 'home' && (
+            <TopBar 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              habits={habits}
+              setCurrentView={setCurrentView}
+              tier={tier}
+              updateTier={updateTier}
+            />
+          )}
           
           <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
             {renderScreen()}
