@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Send, Plus, Upload, X, Image as ImageIcon, Utensils } from 'lucide-react';
+import { Mic, Send, Plus, Upload, X, Image as ImageIcon, Utensils, Camera } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { parseFoodFromQuery } from '../lib/gemini';
 
@@ -103,6 +103,42 @@ export default function FoodScreen({ habits = [], onSave }) {
 
     setInputText('');
     setIsProcessing(false);
+  };
+
+  const cameraInputRef = useRef(null);
+
+  const handleCameraScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    // Simulate AI processing the image
+    await new Promise(r => setTimeout(r, 1500));
+    
+    // Hardcoded mock response for the demo
+    const nutrition = {
+      foodName: 'Grilled Chicken Salad (AI Vision)',
+      cal: 320,
+      p: 28,
+      c: 12,
+      f: 18,
+    };
+
+    setSelectedFoodForQuantity({
+      name: nutrition.foodName,
+      text: nutrition.foodName,
+      cal: nutrition.cal,
+      p: nutrition.p,
+      c: nutrition.c,
+      f: nutrition.f,
+      icon: '📸'
+    });
+    setFoodQuantity(1);
+    setIsQuantityModalOpen(true);
+    setIsProcessing(false);
+    
+    // reset input
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const confirmQuantityAndSave = (e) => {
@@ -243,7 +279,7 @@ export default function FoodScreen({ habits = [], onSave }) {
           {/* AI Entry */}
           <div className="bg-[#18181b] rounded-2xl border border-[#27272a] p-6 shadow-lg">
             <h3 className="text-lg font-bold text-white mb-4">Log Food with AI</h3>
-            <form onSubmit={handleAIAssist} className="flex space-x-2">
+            <form onSubmit={handleAIAssist} className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
               <div className="relative flex-1">
                 <input
                   type="text"
@@ -256,7 +292,7 @@ export default function FoodScreen({ habits = [], onSave }) {
                 <button 
                   type="button"
                   onClick={toggleListen}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors cursor-pointer ${
                     isListening ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white hover:bg-[#27272a]'
                   }`}
                   aria-label="Toggle voice input"
@@ -264,13 +300,32 @@ export default function FoodScreen({ habits = [], onSave }) {
                   <Mic size={20} />
                 </button>
               </div>
-              <button
-                type="submit"
-                disabled={isProcessing || !inputText.trim()}
-                className="bg-red-600 hover:bg-red-500 text-white px-6 rounded-xl font-bold transition-all disabled:opacity-50 flex items-center shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
-              >
-                {isProcessing ? 'Thinking...' : <Send size={20} />}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="bg-[#27272a] hover:bg-[#3f3f46] text-white px-5 rounded-xl font-bold transition-all flex items-center justify-center cursor-pointer"
+                  title="Scan Plate with Camera"
+                  disabled={isProcessing}
+                >
+                  <Camera size={20} />
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  ref={cameraInputRef}
+                  onChange={handleCameraScan}
+                />
+                <button
+                  type="submit"
+                  disabled={isProcessing || !inputText.trim()}
+                  className="bg-red-600 hover:bg-red-500 text-white px-6 rounded-xl font-bold transition-all disabled:opacity-50 flex items-center shadow-[0_0_15px_rgba(239,68,68,0.2)] cursor-pointer"
+                >
+                  {isProcessing ? 'Thinking...' : <Send size={20} />}
+                </button>
+              </div>
             </form>
             <p className="text-xs text-zinc-500 mt-3">The AI will automatically estimate calories and macros.</p>
           </div>
