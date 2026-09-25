@@ -68,6 +68,44 @@ export default function GoalsScreen({ goals, updateGoals }) {
     setBfResult(Math.max(5, Math.round(bf * 10) / 10)); // just a rough mock
   };
 
+  const calculatePremiumPlan = () => {
+    if (!goals.currentWeight || !goals.height || !goals.age) return null;
+    
+    // Mifflin-St Jeor BMR
+    let bmr = 10 * goals.currentWeight + 6.25 * goals.height - 5 * goals.age;
+    bmr += (goals.gender === 'male' ? 5 : -161);
+
+    const activityMultipliers = {
+      sedentary: 1.2,
+      lightly_active: 1.375,
+      moderately_active: 1.55,
+      very_active: 1.725
+    };
+    const tdee = bmr * (activityMultipliers[goals.activityLevel] || 1.2);
+
+    let targetCalories = tdee;
+    let explanation = "This is your maintenance calories to keep your current weight.";
+    
+    if (goals.targetWeight < goals.currentWeight) {
+      targetCalories = tdee - 500;
+      explanation = "We've created a safe 500 calorie deficit to help you lose weight sustainably (~0.5kg/wk).";
+    } else if (goals.targetWeight > goals.currentWeight) {
+      targetCalories = tdee + 300;
+      explanation = "We've added a 300 calorie surplus to fuel healthy muscle growth.";
+    }
+
+    targetCalories = Math.max(1200, Math.round(targetCalories)); // Safety floor
+    
+    // Macros (Protein: 2g/kg, Fat: 25%, Carbs: Remainder)
+    const protein = Math.round(goals.currentWeight * 2);
+    const fat = Math.round((targetCalories * 0.25) / 9);
+    const carbs = Math.round((targetCalories - (protein * 4) - (fat * 9)) / 4);
+
+    return { calories: targetCalories, protein, fat, carbs, explanation };
+  };
+
+  const premiumPlan = calculatePremiumPlan();
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
       
@@ -179,6 +217,39 @@ export default function GoalsScreen({ goals, updateGoals }) {
 
         {/* Calculators */}
         <div className="space-y-6">
+
+          {premiumPlan && (
+            <div className="bg-gradient-to-br from-[#18181b] to-[#27272a]/20 rounded-2xl border border-red-500/30 p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-bl-xl z-10">Premium Plan</div>
+              <h3 className="font-bold text-white mb-2 flex items-center">
+                <Sparkles size={18} className="text-red-500 mr-2" /> Your Custom Nutrition Target
+              </h3>
+              
+              <div className="mt-4 mb-6">
+                <div className="flex items-end space-x-2">
+                  <span className="text-5xl font-black text-white">{premiumPlan.calories}</span>
+                  <span className="text-zinc-400 font-medium pb-1">kcal / day</span>
+                </div>
+                <p className="text-sm text-zinc-400 mt-2 bg-red-500/10 text-red-400 p-3 rounded-lg border border-red-500/20">{premiumPlan.explanation}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 text-center">
+                  <p className="text-xs text-zinc-500 font-bold mb-1">PROTEIN</p>
+                  <p className="text-lg font-black text-red-500">{premiumPlan.protein}g</p>
+                </div>
+                <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 text-center">
+                  <p className="text-xs text-zinc-500 font-bold mb-1">CARBS</p>
+                  <p className="text-lg font-black text-blue-500">{premiumPlan.carbs}g</p>
+                </div>
+                <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 text-center">
+                  <p className="text-xs text-zinc-500 font-bold mb-1">FAT</p>
+                  <p className="text-lg font-black text-yellow-500">{premiumPlan.fat}g</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           
           <div className="bg-[#18181b] rounded-2xl border border-[#27272a] p-6 shadow-xl">
             <h3 className="font-bold text-white mb-4 flex items-center">
