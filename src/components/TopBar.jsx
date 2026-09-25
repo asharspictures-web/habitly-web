@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Bell, BellOff, LogOut, Dumbbell, Utensils, X, Check } from 'lucide-react';
+import { Search, Bell, BellOff, LogOut, Dumbbell, Utensils, X, Check, Menu } from 'lucide-react';
 
-export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {}, tier = 'free', updateTier = () => {} }) {
+export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {}, tier = 'free', updateTier = () => {}, isMobileMenuOpen, setIsMobileMenuOpen }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -129,19 +129,33 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
   };
 
   return (
-    <header className="h-20 bg-[#09090b]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-8 sticky top-0 z-50">
+    <header className="h-20 bg-[#09090b]/80 backdrop-blur-md border-b border-[#27272a] flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-5 right-8 z-[100] flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200">
+        <div className="fixed top-5 right-4 md:right-8 z-[100] flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-200">
           <Check size={18} className="text-emerald-400" />
           <span className="text-sm font-semibold">{toastMessage}</span>
         </div>
       )}
 
+      {/* Left side mobile menu toggle */}
+      <div className="flex items-center space-x-2 md:hidden mr-2 shrink-0">
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-1 -ml-1 text-zinc-400 hover:text-white rounded-lg transition-colors"
+          aria-label="Toggle Menu"
+        >
+          <Menu size={24} />
+        </button>
+        <div className="flex items-center space-x-2 hidden sm:flex">
+          <img src="/logo.jpg" alt="Habitly" className="w-8 h-8 rounded-lg object-cover border border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.25)]" />
+        </div>
+      </div>
+
       {/* Search Input Container */}
-      <div ref={searchContainerRef} className="flex-1 max-w-xl relative">
+      <div ref={searchContainerRef} className="flex-1 min-w-0 max-w-xl relative">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
           <input 
             ref={searchInputRef}
             type="text" 

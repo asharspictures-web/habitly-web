@@ -77,6 +77,8 @@ function App() {
     setModalConfig({ type: 'confirm', message, onConfirm, onCancel, confirmText, cancelText });
   };
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const renderScreen = () => {
     switch (currentView) {
       case 'home':
@@ -115,7 +117,12 @@ function App() {
     <ErrorBoundary>
       <div className="flex h-screen bg-[#09090b] text-white overflow-hidden font-sans">
         {currentView !== 'home' && (
-          <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
+          <Sidebar 
+            currentView={currentView} 
+            setCurrentView={setCurrentView} 
+            isMobileMenuOpen={isMobileMenuOpen}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+          />
         )}
         
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
@@ -127,10 +134,12 @@ function App() {
               setCurrentView={setCurrentView}
               tier={tier}
               updateTier={updateTier}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
             />
           )}
           
-          <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
+          <main className="flex-1 overflow-y-auto p-4 md:p-10 relative">
             {renderScreen()}
           </main>
         </div>
