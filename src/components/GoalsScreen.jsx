@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale, ChevronRight, Sparkles } from 'lucide-react';
+import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale, ChevronRight, Sparkles, Utensils } from 'lucide-react';
+import { COMMON_FOODS } from '../lib/foodUtils';
 
-export default function GoalsScreen({ goals, updateGoals }) {
+export default function GoalsScreen({ goals, updateGoals, addFood }) {
   const [localGoals, setLocalGoals] = useState(goals);
   
   // Calculators State
@@ -101,7 +102,19 @@ export default function GoalsScreen({ goals, updateGoals }) {
     const fat = Math.round((targetCalories * 0.25) / 9);
     const carbs = Math.round((targetCalories - (protein * 4) - (fat * 9)) / 4);
 
-    return { calories: targetCalories, protein, fat, carbs, explanation };
+    let suggestedFoods = COMMON_FOODS.slice(); // Copy
+    if (goals.dietaryPreferences === 'vegetarian') {
+      suggestedFoods = suggestedFoods.filter(f => !['Chicken', 'Salmon', 'Fish', 'Beef', 'Pork'].some(m => f.name.includes(m)));
+    } else if (goals.dietaryPreferences === 'vegan') {
+      suggestedFoods = suggestedFoods.filter(f => !['Chicken', 'Salmon', 'Fish', 'Beef', 'Pork', 'Paneer', 'Ghee', 'Cheese', 'Yogurt', 'Eggs'].some(m => f.name.includes(m)));
+    } else if (goals.dietaryPreferences === 'allergies') {
+      suggestedFoods = suggestedFoods.filter(f => !['Peanut', 'Nut'].some(m => f.name.includes(m)));
+    }
+    
+    // Pick 3 random foods that vaguely fit the calorie goal (we just pick 3 for demo)
+    suggestedFoods = suggestedFoods.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+    return { calories: targetCalories, protein, fat, carbs, explanation, suggestedFoods };
   };
 
   const premiumPlan = calculatePremiumPlan();
@@ -247,6 +260,36 @@ export default function GoalsScreen({ goals, updateGoals }) {
                   <p className="text-lg font-black text-yellow-500">{premiumPlan.fat}g</p>
                 </div>
               </div>
+
+              {premiumPlan.suggestedFoods && premiumPlan.suggestedFoods.length > 0 && (
+                <div className="mt-6 border-t border-[#27272a] pt-6">
+                  <h4 className="text-sm font-bold text-white mb-3 flex items-center">
+                    <Utensils size={16} className="text-zinc-400 mr-2" /> Suggested Meals for You
+                  </h4>
+                  <div className="space-y-2">
+                    {premiumPlan.suggestedFoods.map((food, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-[#09090b] border border-[#27272a] p-3 rounded-xl">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-2xl">{food.icon}</span>
+                          <div>
+                            <p className="text-sm font-bold text-white">{food.name}</p>
+                            <p className="text-xs text-zinc-500">{food.cal} kcal · {food.p}P / {food.c}C / {food.f}F</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            addFood({ ...food, timestamp: new Date().toISOString() });
+                            alert(`Added ${food.name} to today's log!`);
+                          }}
+                          className="bg-[#27272a] hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          + Log
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           

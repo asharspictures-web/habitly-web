@@ -40,7 +40,7 @@ function App() {
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
-        return <GoalsScreen goals={goals} updateGoals={updateGoals} />;
+        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} />;
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':
