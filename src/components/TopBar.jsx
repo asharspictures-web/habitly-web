@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Bell, BellOff, LogOut, Dumbbell, Utensils, X, Check } from 'lucide-react';
 
-export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {} }) {
+export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {}, tier = 'free', updateTier = () => {} }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -316,8 +316,13 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
                   <span className="text-amber-400 font-bold">7 Days 🔥</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
-                  <span>Account Tier</span>
-                  <span className="text-zinc-300 font-semibold">Habitly Pro</span>
+                  <span>Demo: Premium Account</span>
+                  <button 
+                    onClick={() => updateTier(tier === 'free' ? 'premium' : 'free')}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tier === 'premium' ? 'bg-amber-500' : 'bg-zinc-700'}`}
+                  >
+                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${tier === 'premium' ? 'translate-x-5' : 'translate-x-1'}`} />
+                  </button>
                 </div>
               </div>
 

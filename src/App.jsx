@@ -29,6 +29,12 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [modalConfig, setModalConfig] = useState(null);
+  const [tier, setTier] = useState(() => localStorage.getItem('habitlyTier') || 'free');
+
+  const updateTier = (newTier) => {
+    localStorage.setItem('habitlyTier', newTier);
+    setTier(newTier);
+  };
 
   const showAlert = (message) => setModalConfig({ type: 'alert', message });
   const showConfirm = (message, onConfirm, onCancel, confirmText, cancelText) => {
@@ -42,13 +48,13 @@ function App() {
       case 'pricing':
         return <PricingPage />;
       case 'exercise':
-        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} showAlert={showAlert} showConfirm={showConfirm} />;
+        return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'food':
         return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
-        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} />;
+        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':
@@ -79,6 +85,8 @@ function App() {
           setSearchQuery={setSearchQuery}
           habits={habits}
           setCurrentView={setCurrentView}
+          tier={tier}
+          updateTier={updateTier}
         />
         
         <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
