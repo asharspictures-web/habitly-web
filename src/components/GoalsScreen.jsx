@@ -288,8 +288,8 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
                 Premium Plan
               </div>
               
-              {/* Overlay if Free */}
-              {tier === 'free' && (
+              {/* Overlay if not Premium */}
+              {tier !== 'premium' && (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-[4px]">
                   <Lock className="text-amber-500 mb-3" size={40} />
                   <p className="text-white font-bold text-lg mb-4 shadow-sm">Unlock with Premium</p>
@@ -302,7 +302,7 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
                 </div>
               )}
 
-              <div className={`relative z-10 transition-all duration-300 ${tier === 'free' ? 'blur-[6px] opacity-40 pointer-events-none select-none' : ''}`}>
+              <div className={`relative z-10 transition-all duration-300 ${tier !== 'premium' ? 'blur-[6px] opacity-40 pointer-events-none select-none' : ''}`}>
                 <h3 className="font-bold text-white mb-2 flex items-center">
                   <Sparkles size={18} className={`${tier === 'premium' ? 'text-amber-500' : 'text-red-500'} mr-2`} /> Your Custom Nutrition Target
                 </h3>
@@ -431,21 +431,21 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
             {bmrResult && <p className="text-emerald-500 font-bold bg-emerald-500/10 p-2 rounded-lg inline-block">BMR: {bmrResult} kcal/day</p>}
           </div>
 
-          <div className={`relative bg-[#18181b] rounded-2xl border p-6 shadow-xl overflow-hidden ${tier === 'premium' ? 'border-amber-500/50' : 'border-[#27272a]'}`}>
-            {tier === 'premium' && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] uppercase font-black tracking-widest px-2 py-1 rounded-bl-lg z-30">
-                Premium
+          <div className={`relative bg-[#18181b] rounded-2xl border p-6 shadow-xl overflow-hidden ${tier === 'premium' ? 'border-amber-500/50 bg-gradient-to-br from-[#18181b] to-amber-900/10' : tier === 'pro' ? 'border-amber-500/30' : 'border-[#27272a]'}`}>
+            {(tier === 'premium' || tier === 'pro') && (
+              <div className={`absolute top-0 right-0 text-[10px] uppercase font-black tracking-widest px-2 py-1 rounded-bl-lg z-30 ${tier === 'premium' ? 'bg-amber-500 text-black' : 'bg-amber-600/80 text-white'}`}>
+                {tier === 'premium' ? 'Premium' : 'Pro'}
               </div>
             )}
             
-            {tier === 'free' && (
+            {tier === 'basic' && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-[4px]">
                 <Lock className="text-amber-500 mb-2" size={28} />
-                <button onClick={() => updateTier('premium')} className="bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold px-4 py-1.5 rounded-lg transition-colors shadow-lg">Upgrade</button>
+                <button onClick={() => updateTier('pro')} className="bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold px-4 py-1.5 rounded-lg transition-colors shadow-lg">Upgrade to Pro</button>
               </div>
             )}
             
-            <div className={`relative z-10 transition-all duration-300 ${tier === 'free' ? 'blur-[4px] opacity-40 pointer-events-none select-none' : ''}`}>
+            <div className={`relative z-10 transition-all duration-300 ${tier === 'basic' ? 'blur-[4px] opacity-40 pointer-events-none select-none' : ''}`}>
               <h3 className="font-bold text-white mb-4 flex items-center">
                 <Calculator size={18} className="text-zinc-500 mr-2" /> Macro Needs
               </h3>

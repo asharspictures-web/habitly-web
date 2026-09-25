@@ -316,13 +316,20 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
                   <span className="text-amber-400 font-bold">7 Days 🔥</span>
                 </div>
                 <div className="flex justify-between items-center py-1">
-                  <span>Demo: Premium Account</span>
-                  <button 
-                    onClick={() => updateTier(tier === 'free' ? 'premium' : 'free')}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${tier === 'premium' ? 'bg-amber-500' : 'bg-zinc-700'}`}
+                  <span>Demo Tier</span>
+                  <select 
+                    value={tier}
+                    onChange={(e) => updateTier(e.target.value)}
+                    className={`text-xs font-bold rounded-lg px-2 py-1 outline-none transition-colors ${
+                      tier === 'premium' ? 'bg-amber-500 text-black' : 
+                      tier === 'pro' ? 'bg-amber-600/20 text-amber-500 border border-amber-500/30' : 
+                      'bg-zinc-700 text-white border border-transparent'
+                    }`}
                   >
-                    <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${tier === 'premium' ? 'translate-x-5' : 'translate-x-1'}`} />
-                  </button>
+                    <option value="basic">Basic</option>
+                    <option value="pro">Pro</option>
+                    <option value="premium">Premium</option>
+                  </select>
                 </div>
               </div>
 

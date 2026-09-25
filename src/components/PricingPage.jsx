@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function PricingPage() {
+export default function PricingPage({ updateTier = () => {}, showAlert = () => {}, onNavigate = () => {} }) {
   const tiers = [
-    { name: 'Basic', price: '$5/mo', features: ['Log workouts', 'Track water', 'Basic dashboard'] },
-    { name: 'Pro', price: '$12/mo', features: ['All Basic features', 'Advanced analytics', 'AI suggestions', 'Priority support'] },
-    { name: 'Premium', price: '$20/mo', features: ['All Pro features', 'Personalized coaching', 'Multi‑device sync', 'Early access to new features'] },
+    { name: 'Basic', id: 'basic', price: '$5/mo', features: ['Log workouts', 'Track water', 'Basic dashboard'] },
+    { name: 'Pro', id: 'pro', price: '$12/mo', features: ['All Basic features', 'Advanced analytics', 'AI suggestions', 'Priority support'] },
+    { name: 'Premium', id: 'premium', price: '$20/mo', features: ['All Pro features', 'Personalized coaching', 'Multi‑device sync', 'Early access to new features'] },
   ];
   return (
     <div className="max-w-5xl mx-auto py-12 px-4 md:px-8">
@@ -25,7 +25,14 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <button className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors">
+            <button 
+              onClick={() => {
+                updateTier(tier.id);
+                showAlert(`Demo state updated to ${tier.name} tier!`);
+                onNavigate('dashboard');
+              }}
+              className="mt-auto bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors"
+            >
               Choose {tier.name}
             </button>
           </div>

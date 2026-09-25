@@ -12,6 +12,42 @@ import HomePage from './components/HomePage';
 import PricingPage from './components/PricingPage';
 import { useHabits } from './hooks/useHabits';
 
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-[#09090b] text-white">
+          <div className="bg-[#18181b] p-6 rounded-2xl border border-red-500/30 shadow-2xl text-center max-w-sm">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Something went wrong</h2>
+            <p className="text-sm text-zinc-400 mb-4">An unexpected error occurred while rendering this screen.</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-xl"
+            >
+              Tap to reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const { 
     habits, 
@@ -29,7 +65,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [modalConfig, setModalConfig] = useState(null);
-  const [tier, setTier] = useState(() => localStorage.getItem('habitlyTier') || 'free');
+  const [tier, setTier] = useState(() => localStorage.getItem('habitlyTier') || 'basic');
 
   const updateTier = (newTier) => {
     localStorage.setItem('habitlyTier', newTier);
@@ -46,7 +82,7 @@ function App() {
       case 'home':
         return <HomePage onNavigate={setCurrentView} />;
       case 'pricing':
-        return <PricingPage />;
+        return <PricingPage updateTier={updateTier} showAlert={showAlert} onNavigate={setCurrentView} />;
       case 'exercise':
         return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'food':
@@ -76,57 +112,59 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#09090b] text-white overflow-hidden font-sans">
-      <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
-      
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <TopBar 
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          habits={habits}
-          setCurrentView={setCurrentView}
-          tier={tier}
-          updateTier={updateTier}
-        />
+    <ErrorBoundary>
+      <div className="flex h-screen bg-[#09090b] text-white overflow-hidden font-sans">
+        <Sidebar currentView={currentView} setCurrentView={setCurrentView} />
         
-        <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
-          {renderScreen()}
-        </main>
-      </div>
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          <TopBar 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            habits={habits}
+            setCurrentView={setCurrentView}
+            tier={tier}
+            updateTier={updateTier}
+          />
+          
+          <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
+            {renderScreen()}
+          </main>
+        </div>
 
-      {/* Global Alert / Confirm Modal */}
-      {modalConfig && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative font-sans">
-            <h3 className="text-lg font-bold text-white mb-4">{modalConfig.type === 'confirm' ? 'Confirm' : 'Notice'}</h3>
-            <p className="text-sm text-zinc-300 mb-6 leading-relaxed whitespace-pre-wrap">{modalConfig.message}</p>
-            
-            <div className="flex space-x-3 justify-end">
-              {modalConfig.type === 'confirm' && (
+        {/* Global Alert / Confirm Modal */}
+        {modalConfig && (
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative font-sans">
+              <h3 className="text-lg font-bold text-white mb-4">{modalConfig.type === 'confirm' ? 'Confirm' : 'Notice'}</h3>
+              <p className="text-sm text-zinc-300 mb-6 leading-relaxed whitespace-pre-wrap">{modalConfig.message}</p>
+              
+              <div className="flex space-x-3 justify-end">
+                {modalConfig.type === 'confirm' && (
+                  <button
+                    onClick={() => {
+                      setModalConfig(null);
+                      if (modalConfig.onCancel) modalConfig.onCancel();
+                    }}
+                    className="px-4 py-2 rounded-xl text-sm font-bold bg-[#27272a] text-white hover:bg-[#3f3f46] transition-colors"
+                  >
+                    {modalConfig.cancelText || 'Cancel'}
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setModalConfig(null);
-                    if (modalConfig.onCancel) modalConfig.onCancel();
+                    if (modalConfig.onConfirm) modalConfig.onConfirm();
                   }}
-                  className="px-4 py-2 rounded-xl text-sm font-bold bg-[#27272a] text-white hover:bg-[#3f3f46] transition-colors"
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
                 >
-                  {modalConfig.cancelText || 'Cancel'}
+                  {modalConfig.confirmText || 'OK'}
                 </button>
-              )}
-              <button
-                onClick={() => {
-                  setModalConfig(null);
-                  if (modalConfig.onConfirm) modalConfig.onConfirm();
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-colors"
-              >
-                {modalConfig.confirmText || 'OK'}
-              </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
