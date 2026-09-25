@@ -88,7 +88,7 @@ function App() {
 
       {/* Global Alert / Confirm Modal */}
       {modalConfig && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-[#18181b] border border-[#27272a] rounded-2xl max-w-sm w-full p-6 shadow-2xl relative font-sans">
             <h3 className="text-lg font-bold text-white mb-4">{modalConfig.type === 'confirm' ? 'Confirm' : 'Notice'}</h3>
             <p className="text-sm text-zinc-300 mb-6 leading-relaxed whitespace-pre-wrap">{modalConfig.message}</p>

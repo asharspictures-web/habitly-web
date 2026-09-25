@@ -1,6 +1,6 @@
 // src/components/ExerciseScreen.jsx
 import React, { useState, useEffect } from 'react';
-import { Activity, Clock, Plus, Flame, Play, Pause, Check } from 'lucide-react';
+import { Activity, Clock, Plus, Flame, Play, Pause, Check, PlaySquare } from 'lucide-react';
 import { validateWorkout, calculatePace, calculateCaloriesBurnt, EXERCISE_LIBRARY } from '../lib/workoutUtils.js';
 
 // Activity options – each will render a different set of fields.
@@ -650,8 +650,9 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
                     <p className="text-xs text-zinc-500 mb-1">
                       {isDone ? `Done (${elapsedFmt})` : isRunning ? `Running: ${elapsedFmt}` : 'Ready to start'}
                     </p>
-                    <a href={`https://www.youtube.com/results?search_query=how+to+do+${encodeURIComponent(ex.name)}+exercise`} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 underline">
-                      How to do this ↗
+                    <a href={`https://www.youtube.com/results?search_query=how+to+do+${encodeURIComponent(ex.name)}+exercise`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center space-x-1.5 bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-red-500/50 transition-colors px-2.5 py-1 rounded-md group">
+                      <PlaySquare size={14} className="text-red-500 group-hover:text-red-400" />
+                      <span className="text-[10px] font-bold text-zinc-300 group-hover:text-white">Watch Tutorial</span>
                     </a>
                   </div>
                   <div>
@@ -675,28 +676,33 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
           </div>
 
           <div className="mt-4 pt-4 border-t border-red-500/20">
-            <button
-              onClick={() => {
-                const name = document.getElementById('custom-ex-input')?.value;
-                if (name && name.trim()) {
-                  updateGoals({ ...goals, activeRoutine: [...activeRoutine, { name: name.trim(), met: 4.0, tags: [] }] });
-                  document.getElementById('custom-ex-input').value = '';
-                }
-              }}
-              className="w-full text-xs text-red-400 hover:text-red-300 font-bold mb-2 text-center block"
-            >
-              + Add Custom Exercise to Routine
-            </button>
+            <p className="text-xs text-zinc-400 font-semibold mb-2">Add another exercise:</p>
             <div className="flex space-x-2">
-              <input id="custom-ex-input" type="text" placeholder="Custom exercise name..." className="flex-1 bg-[#09090b] border border-[#27272a] text-white text-xs p-2 rounded-lg focus:outline-none" onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const name = e.target.value;
-                  if (name.trim()) {
-                    updateGoals({ ...goals, activeRoutine: [...activeRoutine, { name: name.trim(), met: 4.0, tags: [] }] });
-                    e.target.value = '';
+              <select 
+                id="custom-ex-select"
+                className="flex-1 bg-[#09090b] border border-[#27272a] text-white text-sm p-2.5 rounded-lg focus:outline-none focus:border-red-500/50"
+              >
+                <option value="">-- Select from library --</option>
+                {EXERCISE_LIBRARY.exercises.map(e => (
+                  <option key={e.name} value={e.name}>{e.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  const select = document.getElementById('custom-ex-select');
+                  const name = select.value;
+                  if (name) {
+                    const libEx = EXERCISE_LIBRARY.exercises.find(e => e.name === name);
+                    if (libEx) {
+                      updateGoals({ ...goals, activeRoutine: [...activeRoutine, { ...libEx }] });
+                    }
+                    select.value = '';
                   }
-                }
-              }} />
+                }}
+                className="bg-[#27272a] hover:bg-red-600 text-white text-xs font-bold px-4 rounded-lg transition-colors cursor-pointer"
+              >
+                Add
+              </button>
             </div>
             
             <button
