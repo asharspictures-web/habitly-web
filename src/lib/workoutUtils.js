@@ -158,6 +158,42 @@ export function mergeWorkoutIntoToday(todayEntry, newWorkout) {
 }
 
 /**
+ * Calculate estimated calories burnt for a workout based on MET values or volume.
+ * Assuming a standard weight of 70kg (154 lbs) for globally accepted formulas.
+ * @param {Object} workout
+ * @returns {number}
+ */
+export function calculateCaloriesBurnt(workout) {
+  const WEIGHT_KG = 70;
+  let calories = 0;
+
+  if (workout.activity === 'Strength Training') {
+    // A standard set of weightlifting (e.g., 10 reps) burns about 10-15 calories including rest.
+    // We estimate based on reps and load. If bodyweight, we assume 70kg.
+    const reps = workout.reps || 10;
+    const load = workout.loadKg || (workout.loadLb ? workout.loadLb * 0.453592 : 0);
+    // Simple heuristic: 1.5 calories per rep (moderate intensity).
+    // Adjust slightly for higher load: base 1 kcal + 0.01 kcal per kg moved per rep.
+    calories = reps * (1.2 + (load * 0.01));
+  } else if (['Running', 'Walking', 'Cycling', 'Swimming', 'Yoga'].includes(workout.activity)) {
+    const timeHours = (workout.timeMinutes || 0) / 60;
+    let met = 4; // default generic
+    if (workout.activity === 'Running') met = 9.8;
+    if (workout.activity === 'Walking') met = 3.8;
+    if (workout.activity === 'Cycling') met = 7.5;
+    if (workout.activity === 'Swimming') met = 7.0;
+    if (workout.activity === 'Yoga') met = 3.0;
+    
+    calories = met * WEIGHT_KG * timeHours;
+  } else if (workout.activity === 'Other') {
+    const timeHours = (workout.timeMinutes || 0) / 60;
+    calories = 4 * WEIGHT_KG * timeHours; // Moderate MET 4.0
+  }
+
+  return Math.round(calories) || 0;
+}
+
+/**
  * Export a shallow copy of the schemas for external inspection (e.g., tests).
  */
 export const SCHEMAS = {

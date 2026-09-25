@@ -1,7 +1,7 @@
 // src/components/ExerciseScreen.jsx
 import React, { useState, useEffect } from 'react';
 import { Activity, Clock, Plus, Flame, Play, Pause, Check } from 'lucide-react';
-import { validateWorkout, calculatePace } from '../lib/workoutUtils.js';
+import { validateWorkout, calculatePace, calculateCaloriesBurnt } from '../lib/workoutUtils.js';
 
 // Common exercise suggestions for autocomplete
 const EXERCISE_SUGGESTIONS = [
@@ -324,7 +324,8 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
       alert('Please fix: ' + errors.join(', '));
       return;
     }
-    setLiveExercises(prev => [...prev, currentWorkout]);
+    const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
+    setLiveExercises(prev => [...prev, withCalories]);
     setCurrentWorkout({ activity: selectedActivity });
   };
 
@@ -343,11 +344,13 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
       alert('Please fix: ' + errors.join(', '));
       return;
     }
-    onSave(currentWorkout);
+    const withCalories = { ...currentWorkout, calories: calculateCaloriesBurnt(currentWorkout) };
+    onSave(withCalories);
     setCurrentWorkout({ activity: selectedActivity });
   };
 
-  const allWorkouts = habits.flatMap(h => h.workouts || []);
+  // Inject the date from the parent habit record so we can display it correctly
+  const allWorkouts = habits.flatMap(h => (h.workouts || []).map(w => ({ ...w, date: h.date })));
   const filteredWorkouts = searchQuery.trim()
     ? allWorkouts.filter(w => (w.activity || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
     : allWorkouts;
@@ -509,14 +512,25 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
                     <Activity size={18} />
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{w.activity}</p>
-                    <p className="text-xs text-zinc-500">{new Date(w.date).toLocaleDateString()}</p>
+                    <p className="font-semibold text-white">
+                      {w.activity}{w.exerciseName ? ` - ${w.exerciseName}` : ''}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      {new Date(w.date || new Date()).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right text-sm text-zinc-400">
-                  {w.distanceKm && <span>{w.distanceKm} km </span>}
-                  {w.timeMinutes && <span>{w.timeMinutes} min </span>}
-                  {w.reps && <span>{w.reps} reps </span>}
+                  {w.distanceKm && <span className="block">{w.distanceKm} km </span>}
+                  {w.timeMinutes && <span className="block">{w.timeMinutes} min </span>}
+                  {w.reps && (
+                    <span className="block">
+                      {w.reps} reps
+                      {w.loadKg ? ` @ ${w.loadKg}kg` : ''}
+                      {w.loadLb ? ` @ ${w.loadLb}lb` : ''}
+                    </span>
+                  )}
+                  {w.calories && <span className="block text-red-400 font-medium">{w.calories} kcal</span>}
                 </div>
               </div>
             ))
