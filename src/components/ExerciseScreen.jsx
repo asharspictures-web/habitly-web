@@ -32,7 +32,7 @@ const EXERCISE_TYPES = [
  * Helper component that renders fields specific to the selected activity.
  * Returns a workout object matching the new schema.
  */
-function ActivityForm({ activity, onChange }) {
+function ActivityForm({ activity, onChange, habits }) {
   const [exerciseName, setExerciseName] = useState(''); // for strength
   const [showSuggestions, setShowSuggestions] = useState(false);
   const filteredSuggestions = EXERCISE_SUGGESTIONS.filter(s => s.toLowerCase().includes(exerciseName.toLowerCase()));
@@ -44,6 +44,25 @@ function ActivityForm({ activity, onChange }) {
   const [distanceKm, setDistanceKm] = useState('');
   const [timeMinutes, setTimeMinutes] = useState('');
   const [notes, setNotes] = useState('');
+
+  const [previousStats, setPreviousStats] = useState(null);
+
+  useEffect(() => {
+    if (activity === 'Strength Training' && exerciseName.trim().length > 0) {
+      const allWorkouts = (habits || []).flatMap(h => h.workouts || []);
+      let found = null;
+      for (let i = allWorkouts.length - 1; i >= 0; i--) {
+        const w = allWorkouts[i];
+        if (w.activity === 'Strength Training' && w.exerciseName && w.exerciseName.toLowerCase() === exerciseName.trim().toLowerCase()) {
+          found = w;
+          break;
+        }
+      }
+      setPreviousStats(found);
+    } else {
+      setPreviousStats(null);
+    }
+  }, [activity, exerciseName, habits]);
 
   // Whenever a field changes, compose a partial workout object and notify parent.
   useEffect(() => {
@@ -122,12 +141,26 @@ function ActivityForm({ activity, onChange }) {
                 <li
                   key={i}
                   onMouseDown={() => { setExerciseName(s); setShowSuggestions(false); }}
-                  className="p-2 cursor-pointer hover:bg-red-500/20"
+                  className="p-2 cursor-pointer hover:bg-red-500/20 text-white"
                 >
                   {s}
                 </li>
               ))}
             </ul>
+          )}
+          {previousStats && (
+            <div className="mt-2 p-2.5 bg-[#18181b] border border-[#27272a] rounded-xl flex items-center justify-between text-xs animate-in fade-in duration-300">
+              <div className="flex items-center space-x-2">
+                <Clock size={14} className="text-zinc-500" />
+                <span className="text-zinc-400">Previous:</span>
+                <span className="font-semibold text-white">
+                  {previousStats.reps} reps
+                  {previousStats.loadKg ? ` @ ${previousStats.loadKg}kg` : ''}
+                  {previousStats.loadLb ? ` @ ${previousStats.loadLb}lb` : ''}
+                </span>
+              </div>
+              <span className="text-zinc-500">{new Date(previousStats.date || previousStats.timestamp || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+            </div>
           )}
         </div>
         <div className="flex space-x-4">
@@ -393,7 +426,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
               ))}
             </select>
           </div>
-          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} />
+          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
           <div className="flex space-x-4">
             <button
               type="button"
@@ -445,7 +478,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '' }) {
               ))}
             </select>
           </div>
-          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} />
+          <ActivityForm activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
           <button
             type="submit"
             onClick={handleStaticSubmit}
