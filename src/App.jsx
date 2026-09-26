@@ -100,7 +100,7 @@ function App() {
   const renderScreen = () => {
     switch (currentView) {
       case 'home':
-        return <HomePage onNavigate={setCurrentView} />;
+        return <HomePage onNavigate={setCurrentView} user={user} onSignOut={signOut} />;
       case 'pricing':
         return <PricingPage updateTier={updateTier} showAlert={showAlert} onNavigate={setCurrentView} />;
       case 'exercise':

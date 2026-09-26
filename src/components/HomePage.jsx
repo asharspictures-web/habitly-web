@@ -1,7 +1,9 @@
 import React from 'react';
 import { Bot, Sparkles, Activity, ArrowRight, ChevronRight, Dumbbell, Utensils } from 'lucide-react';
 
-export default function HomePage({ onNavigate }) {
+export default function HomePage({ onNavigate, user, onSignOut }) {
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest';
+
   return (
     <div className="animate-in fade-in duration-700 min-h-screen flex flex-col w-full">
       
@@ -35,12 +37,34 @@ export default function HomePage({ onNavigate }) {
               >
                 Pricing
               </button>
-              <button 
-                onClick={() => onNavigate('dashboard')} 
-                className="bg-[#27272a]/80 backdrop-blur-md hover:bg-[#3f3f46] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors border border-[#3f3f46]"
-              >
-                Log In
-              </button>
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-emerald-400 font-medium hidden sm:inline-block">
+                    Signed in as <span className="font-bold">{displayName}</span>
+                  </span>
+                  <button 
+                    onClick={() => onNavigate('dashboard')} 
+                    className="bg-[#27272a]/80 backdrop-blur-md hover:bg-[#3f3f46] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors border border-[#3f3f46]"
+                  >
+                    Dashboard
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onSignOut && onSignOut();
+                    }} 
+                    className="text-sm font-bold text-zinc-400 hover:text-white transition-colors drop-shadow-md"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => onNavigate('dashboard')} 
+                  className="bg-[#27272a]/80 backdrop-blur-md hover:bg-[#3f3f46] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors border border-[#3f3f46]"
+                >
+                  Log In
+                </button>
+              )}
             </div>
           </div>
 
