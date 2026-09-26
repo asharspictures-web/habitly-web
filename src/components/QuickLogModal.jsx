@@ -274,7 +274,8 @@ export default function QuickLogModal({
                 <button
                   type="button"
                   onClick={() => handleCustomWater(false)}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                  disabled={!customWater}
+                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={14} />
                   <span>Add</span>
@@ -282,7 +283,8 @@ export default function QuickLogModal({
                 <button
                   type="button"
                   onClick={() => handleCustomWater(true)}
-                  className="px-3.5 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  disabled={!customWater}
+                  className="px-3.5 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Set Total
                 </button>
@@ -408,7 +410,8 @@ export default function QuickLogModal({
                 <button
                   type="button"
                   onClick={() => handleCustomSteps(false)}
-                  className="px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                  disabled={!customSteps}
+                  className="px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={14} />
                   <span>Add</span>
@@ -416,7 +419,8 @@ export default function QuickLogModal({
                 <button
                   type="button"
                   onClick={() => handleCustomSteps(true)}
-                  className="px-3.5 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  disabled={!customSteps}
+                  className="px-3.5 py-2.5 bg-[#27272a] hover:bg-[#3f3f46] text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Set Total
                 </button>
