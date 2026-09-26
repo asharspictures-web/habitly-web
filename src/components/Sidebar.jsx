@@ -36,7 +36,7 @@ export function Sidebar({ currentView, setCurrentView, isMobileMenuOpen, setIsMo
         ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
       `}>
         <div className="p-6">
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center space-x-3 cursor-pointer" onClick={() => handleNav('home')}>
+          <h1 className="text-2xl font-black tracking-tight text-white flex items-center space-x-3 cursor-pointer" onClick={() => handleNav('dashboard')}>
             <img 
               src="/logo.jpg" 
               alt="Habitly Logo" 
