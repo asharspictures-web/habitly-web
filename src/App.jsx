@@ -116,7 +116,7 @@ function App() {
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
-        return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
+        return <GoalsScreen habits={habits} goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'health-safety':
         return <HealthSafetyScreen 
           userId={user?.id}

@@ -3,7 +3,7 @@ import { Target, Lock, Calculator, Droplets, Moon, Footprints, Dumbbell, Scale, 
 import { COMMON_FOODS } from '../lib/foodUtils';
 import { EXERCISE_LIBRARY } from '../lib/workoutUtils';
 
-export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, showConfirm, tier = 'free', updateTier }) {
+export default function GoalsScreen({ habits, goals, updateGoals, addFood, showAlert, showConfirm, tier = 'free', updateTier }) {
   const [localGoals, setLocalGoals] = useState(goals);
   
   // Calculators State
@@ -14,6 +14,15 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
   // Premium Onboarding State
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
+
+  // Cuisine Preference
+  const [cuisine, setCuisine] = useState(() => localStorage.getItem('cuisinePreference') || 'Mixed');
+
+  const handleCuisineChange = (e) => {
+    const val = e.target.value;
+    setCuisine(val);
+    localStorage.setItem('cuisinePreference', val);
+  };
 
   const handleSaveGoals = (e) => {
     e.preventDefault();
@@ -85,34 +94,106 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
     };
     const tdee = bmr * (activityMultipliers[goals.activityLevel] || 1.2);
 
-    let targetCalories = tdee;
-    let explanation = "This is your maintenance calories to keep your current weight.";
-    
-    if (goals.targetWeight < goals.currentWeight) {
-      targetCalories = tdee - 500;
-      explanation = "We've created a safe 500 calorie deficit to help you lose weight sustainably (~0.5kg/wk).";
-    } else if (goals.targetWeight > goals.currentWeight) {
-      targetCalories = tdee + 300;
-      explanation = "We've added a 300 calorie surplus to fuel healthy muscle growth.";
+    // Dynamic Activity Burn from today's logs
+    let caloriesBurnedToday = 0;
+    if (habits && habits.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayLog = habits.find(h => h.date && h.date.startsWith(today)) || habits[habits.length - 1];
+      if (todayLog) {
+         if (todayLog.steps) caloriesBurnedToday += todayLog.steps * 0.04;
+         if (todayLog.workoutDuration) caloriesBurnedToday += todayLog.workoutDuration * 7;
+         if (todayLog.workouts && Array.isArray(todayLog.workouts)) {
+             todayLog.workouts.forEach(w => {
+                 if (w.duration) caloriesBurnedToday += w.duration * 7;
+             });
+         }
+      }
     }
 
+    let baseCalories = tdee;
+    let explanation = "Maintenance calories";
+    if (goals.targetWeight < goals.currentWeight) {
+      baseCalories = tdee - 500;
+      explanation = "500 calorie deficit";
+    } else if (goals.targetWeight > goals.currentWeight) {
+      baseCalories = tdee + 300;
+      explanation = "300 calorie surplus";
+    }
+
+    let targetCalories = baseCalories + caloriesBurnedToday;
     targetCalories = Math.max(1200, Math.round(targetCalories)); // Safety floor
+
+    explanation += ` + ${Math.round(caloriesBurnedToday)} cals burned today from workouts & steps = ${targetCalories} kcal dynamic budget.`;
     
     // Macros (Protein: 2g/kg, Fat: 25%, Carbs: Remainder)
     const protein = Math.round(goals.currentWeight * 2);
     const fat = Math.round((targetCalories * 0.25) / 9);
     const carbs = Math.round((targetCalories - (protein * 4) - (fat * 9)) / 4);
 
-    let suggestedFoods = COMMON_FOODS.slice(); // Copy
-    if (goals.dietaryPreferences === 'vegetarian') {
-      suggestedFoods = suggestedFoods.filter(f => !['Chicken', 'Salmon', 'Fish', 'Beef', 'Pork'].some(m => f.name.includes(m)));
-    } else if (goals.dietaryPreferences === 'vegan') {
-      suggestedFoods = suggestedFoods.filter(f => !['Chicken', 'Salmon', 'Fish', 'Beef', 'Pork', 'Paneer', 'Ghee', 'Cheese', 'Yogurt', 'Eggs'].some(m => f.name.includes(m)));
-    } else if (goals.dietaryPreferences === 'allergies') {
-      suggestedFoods = suggestedFoods.filter(f => !['Peanut', 'Nut'].some(m => f.name.includes(m)));
-    }
+    // AI Dietician Cuisine Logic
+    const getCuisineMeals = (c, isVeg) => {
+       const lib = {
+          "North Indian": {
+             breakfast: isVeg ? ["2 Multigrain Parathas", "1 Bowl Curd", "1 Cup Chai (no sugar)"] : ["2 Egg Omelette", "2 Slices Whole Wheat Bread", "1 Cup Chai (no sugar)"],
+             lunch: isVeg ? ["2 Roti", "1 Bowl Dal Tadka", "1 Bowl Mixed Veg Sabzi", "Cucumber Salad"] : ["2 Roti", "1 Portion Chicken Curry", "1 Bowl Mixed Veg Sabzi", "Cucumber Salad"],
+             snack: isVeg ? ["Handful Roasted Makhana", "1 Cup Green Tea"] : ["1 Boiled Egg", "1 Apple"],
+             dinner: isVeg ? ["1 Bowl Rice", "1 Bowl Rajma", "Side Salad"] : ["1 Bowl Rice", "1 Portion Grilled Chicken", "Side Salad"]
+          },
+          "South Indian": {
+             breakfast: isVeg ? ["2 Idlis", "1 Bowl Sambar", "Coconut Chutney (1 tbsp)"] : ["2 Eggs Scrambled", "1 Appam", "Filter Coffee"],
+             lunch: isVeg ? ["1 Portion Rice", "1 Bowl Rasam", "Poriyal (Stir fry veg)", "1 Bowl Curd"] : ["1 Portion Rice", "1 Portion Fish Curry", "Poriyal", "1 Bowl Curd"],
+             snack: isVeg ? ["1 Small Bowl Sundal (Chickpeas)", "Buttermilk"] : ["1 Small Bowl Sundal (Chickpeas)", "Buttermilk"],
+             dinner: isVeg ? ["1 Dosa", "Sambar", "Mint Chutney"] : ["2 Roti", "Chicken Chettinad", "Cucumber Salad"]
+          },
+          "Mediterranean": {
+             breakfast: ["1 Bowl Greek Yogurt", "Handful of Almonds", "1 Sliced Apple", "Drizzle of Honey"],
+             lunch: isVeg ? ["Quinoa Salad", "Hummus (2 tbsp)", "Cherry Tomatoes", "Olive Oil Dressing"] : ["Grilled Chicken Breast", "Quinoa Salad", "Hummus (2 tbsp)"],
+             snack: ["1 Orange", "Handful of Walnuts"],
+             dinner: isVeg ? ["Grilled Eggplant & Zucchini", "Lentil Soup", "1 Slice Whole Grain Bread"] : ["Baked Salmon", "Grilled Zucchini & Bell Peppers", "1 Slice Whole Grain Bread"]
+          },
+          "Continental/Western": {
+             breakfast: isVeg ? ["1 Bowl Oatmeal", "1 Banana", "1 tbsp Peanut Butter"] : ["2 Scrambled Eggs", "2 Slices Whole Wheat Toast", "1 Glass Orange Juice"],
+             lunch: isVeg ? ["Large Mixed Salad", "Tofu Strips", "Light Vinaigrette", "1 Apple"] : ["Grilled Turkey Wrap", "Large Mixed Salad", "Light Vinaigrette"],
+             snack: ["Protein Shake", "1 Handful Mixed Nuts"],
+             dinner: isVeg ? ["Pasta Primavera (Whole Wheat)", "Side of Steamed Broccoli"] : ["Grilled Steak (Lean cut)", "Mashed Sweet Potato", "Steamed Broccoli"]
+          },
+          "Mexican": {
+             breakfast: isVeg ? ["2 Corn Tortillas", "Black Beans (1/2 cup)", "Avocado Slices", "Salsa"] : ["2 Scrambled Eggs with Pico de Gallo", "2 Corn Tortillas", "Avocado Slices"],
+             lunch: isVeg ? ["Vegetarian Burrito Bowl (No Cream)", "Guacamole (1 tbsp)"] : ["Chicken Fajitas", "Black Beans (1/2 cup)", "Guacamole (1 tbsp)"],
+             snack: ["Carrot Sticks", "Hummus (2 tbsp)"],
+             dinner: isVeg ? ["Mushroom Tacos", "Side Salad", "Salsa Verde"] : ["Shrimp Tacos", "Side Salad", "Salsa Verde"]
+          },
+          "Chinese": {
+             breakfast: isVeg ? ["1 Bowl Rice Congee", "Pickled Veggies", "Tofu Slices"] : ["1 Bowl Rice Congee", "1 Hard Boiled Egg", "Steamed Greens"],
+             lunch: isVeg ? ["Vegetable Fried Rice", "Mapo Tofu (Low Oil)", "Bok Choy"] : ["Chicken Stir Fry", "1 Portion Brown Rice", "Bok Choy"],
+             snack: ["1 Pear", "Green Tea"],
+             dinner: isVeg ? ["Vegetable Spring Rolls (Baked)", "Hot and Sour Soup (Veg)"] : ["Steamed Fish with Soy Sauce", "Hot and Sour Soup", "Steamed Greens"]
+          },
+          "Middle Eastern": {
+             breakfast: isVeg ? ["2 tbsp Labneh", "1 Whole Wheat Pita", "Cucumber & Tomato Slices", "Olives"] : ["2 Eggs Shakshuka", "1 Whole Wheat Pita", "Cucumber & Tomato Slices"],
+             lunch: isVeg ? ["Falafel (Baked, 3 pcs)", "Tabouleh Salad", "Hummus"] : ["Chicken Shawarma (No bread)", "Tabouleh Salad", "Hummus"],
+             snack: ["2 Dates", "Handful of Pistachios"],
+             dinner: isVeg ? ["Mujadara (Lentils & Rice)", "Fattoush Salad"] : ["Lamb Kofta (2 pcs)", "Fattoush Salad"]
+          },
+          "Japanese": {
+             breakfast: isVeg ? ["1 Bowl Miso Soup", "Steamed Rice", "Natto", "Seaweed"] : ["1 Bowl Miso Soup", "Grilled Salmon Flakes", "Steamed Rice", "Seaweed"],
+             lunch: isVeg ? ["Vegetable Sushi Roll", "Edamame", "Side Salad"] : ["Chicken Teriyaki Bento (No deep fried)", "Edamame", "Side Salad"],
+             snack: ["1 Matcha Latte (Unsweetened)", "Rice Crackers"],
+             dinner: isVeg ? ["Tofu Steak", "Soba Noodles", "Steamed Veggies"] : ["Sashimi Platter", "Soba Noodles", "Steamed Veggies"]
+          },
+          "Mixed": {
+             breakfast: isVeg ? ["1 Bowl Oatmeal", "1 Apple", "1 tbsp Almond Butter"] : ["2 Boiled Eggs", "1 Sliced Apple", "1 Glass Milk"],
+             lunch: isVeg ? ["1 Bowl Quinoa", "Grilled Veggies", "Hummus"] : ["Grilled Chicken Breast", "1 Bowl Quinoa", "Grilled Veggies"],
+             snack: ["1 Banana", "Handful of Walnuts"],
+             dinner: isVeg ? ["1 Bowl Dal", "1 Roti", "Large Mixed Salad"] : ["Baked Fish", "Steamed Asparagus", "1 Roti"]
+          }
+       };
+       return lib[c] || lib["Mixed"];
+    };
+
+    const isVeg = goals.dietaryPreferences === 'vegetarian' || goals.dietaryPreferences === 'vegan';
+    const dietPlan = getCuisineMeals(cuisine, isVeg);
     
-    // Pick 5 random foods that fit the calorie goal 
     const wakeStr = goals.wakeTime || '07:00';
     const sleepStr = goals.sleepTime || '23:00';
     const wakeParts = wakeStr.split(':').map(Number);
@@ -124,9 +205,8 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
     
     const times = [
       wakeMins + 60, // Breakfast 1hr after wake
-      wakeMins + span * 0.3, // Mid-Morning
-      wakeMins + span * 0.5, // Lunch
-      wakeMins + span * 0.75, // Evening Snack
+      wakeMins + span * 0.4, // Lunch
+      wakeMins + span * 0.7, // Snack
       sleepMins - 120 // Dinner 2 hrs before bed
     ].map(mins => {
       let h = Math.floor(mins / 60) % 24;
@@ -136,12 +216,22 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
       return `${hh}:${m.toString().padStart(2, '0')} ${ampm}`;
     });
 
-    const mealLabels = ["Breakfast", "Mid-Morning Snack", "Lunch", "Evening Snack", "Dinner"];
-    const pickedFoods = suggestedFoods.sort(() => 0.5 - Math.random());
+    const mealLabels = ["Breakfast", "Lunch", "Snack", "Dinner"];
+    const mealKeys = ["breakfast", "lunch", "snack", "dinner"];
     
-    suggestedFoods = mealLabels.map((label, i) => {
-       const foodItem = pickedFoods[i % pickedFoods.length];
-       return { ...foodItem, mealLabel: label, suggestedTime: times[i] };
+    const suggestedFoods = mealLabels.map((label, i) => {
+       const mKey = mealKeys[i];
+       const items = dietPlan[mKey] || ["Custom Meal Item"];
+       return { 
+          name: items.join(' + '),
+          mealLabel: label, 
+          suggestedTime: times[i],
+          icon: '🍽️',
+          cal: Math.round(targetCalories / 4), // rough estimate for each
+          p: Math.round(protein / 4),
+          c: Math.round(carbs / 4),
+          f: Math.round(fat / 4)
+       };
     });
 
     // Workout Suggestions
@@ -599,14 +689,30 @@ export default function GoalsScreen({ goals, updateGoals, addFood, showAlert, sh
                   <input type="text" placeholder="e.g. Bad knees, Cardiac Safe" value={localGoals.healthConditions || ''} onChange={e => setLocalGoals({...localGoals, healthConditions: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50" />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-semibold text-zinc-300 mb-2">Dietary Preference</label>
-                  <select value={localGoals.dietaryPreferences || 'none'} onChange={e => setLocalGoals({...localGoals, dietaryPreferences: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50">
-                    <option value="none">None</option>
-                    <option value="vegetarian">Vegetarian</option>
-                    <option value="vegan">Vegan</option>
-                    <option value="allergies">Allergies (Nut, Dairy, etc.)</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Dietary Preference</label>
+                    <select value={localGoals.dietaryPreferences || 'none'} onChange={e => setLocalGoals({...localGoals, dietaryPreferences: e.target.value})} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50">
+                      <option value="none">None</option>
+                      <option value="vegetarian">Vegetarian</option>
+                      <option value="vegan">Vegan</option>
+                      <option value="allergies">Allergies (Nut, Dairy, etc.)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-zinc-300 mb-2">Cuisine</label>
+                    <select value={cuisine} onChange={handleCuisineChange} className="w-full bg-[#09090b] border border-[#27272a] text-white p-3 rounded-xl focus:outline-none focus:border-red-500/50">
+                      <option value="Mixed">Mixed (Default)</option>
+                      <option value="North Indian">North Indian</option>
+                      <option value="South Indian">South Indian</option>
+                      <option value="Mediterranean">Mediterranean</option>
+                      <option value="Continental/Western">Continental/Western</option>
+                      <option value="Mexican">Mexican</option>
+                      <option value="Chinese">Chinese</option>
+                      <option value="Middle Eastern">Middle Eastern</option>
+                      <option value="Japanese">Japanese</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="flex space-x-3 mt-4">
