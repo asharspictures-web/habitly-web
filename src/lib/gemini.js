@@ -57,7 +57,7 @@ function extractQuantity(text, keyword) {
 /**
  * Detects if a user question is a food logging intent
  */
-export function isFoodLogRequest(question) {
+export function isFoodLogRequest(question, foodDatabase = COMMON_FOOD_DATABASE) {
   if (!question || typeof question !== 'string') return false;
   const q = question.trim().toLowerCase();
 
@@ -93,7 +93,7 @@ export function isFoodLogRequest(question) {
   }
 
   // If query explicitly mentions known foods along with meal actions
-  for (const item of COMMON_FOOD_DATABASE) {
+  for (const item of foodDatabase) {
     for (const kw of item.keywords) {
       if (q.includes(kw) && (q.includes('log') || q.includes('ate') || q.includes('had') || q.includes('for breakfast') || q.includes('for lunch') || q.includes('for dinner') || q.includes('for snack'))) {
         return true;
@@ -107,7 +107,7 @@ export function isFoodLogRequest(question) {
 /**
  * Analyzes food query and computes estimated calories and macros
  */
-export function parseFoodFromQuery(query) {
+export function parseFoodFromQuery(query, foodDatabase = COMMON_FOOD_DATABASE) {
   const cleanQ = query.trim().replace(/^(?:please\s+)?(?:can\s+you\s+)?(?:log|track|add|record|i\s+ate|i\s+had|ate|had)\s+/i, '');
   const lowerQ = cleanQ.toLowerCase();
 
@@ -115,7 +115,7 @@ export function parseFoodFromQuery(query) {
   let remainingQuery = lowerQ;
 
   // Search through knowledge base sorted by keyword length descending to match specific phrases first
-  const sortedDatabase = [...COMMON_FOOD_DATABASE].sort((a, b) => {
+  const sortedDatabase = [...foodDatabase].sort((a, b) => {
     const maxA = Math.max(...a.keywords.map(k => k.length));
     const maxB = Math.max(...b.keywords.map(k => k.length));
     return maxB - maxA;
@@ -243,7 +243,7 @@ export async function generateSummary(habits) {
 }
 
 // Interactive AI Chat function with food logging card generation
-export async function chatWithAI(question, habits = []) {
+export async function chatWithAI(question, habits = [], foodDatabase = COMMON_FOOD_DATABASE) {
   const isTest = typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || (process.argv && process.argv.some(a => a.includes('test'))));
   await new Promise(resolve => setTimeout(resolve, isTest ? 5 : 350));
 
@@ -256,8 +256,8 @@ export async function chatWithAI(question, habits = []) {
   const lowerQ = question.toLowerCase();
 
   // 1. Check if user is asking AI to log a food entry
-  if (isFoodLogRequest(question)) {
-    const nutrition = parseFoodFromQuery(question);
+  if (isFoodLogRequest(question, foodDatabase)) {
+    const nutrition = parseFoodFromQuery(question, foodDatabase);
     const text = `I've prepared a nutrition log for "${nutrition.foodName}". Check the breakdown below:`;
     const card = {
       type: 'food_confirmation',

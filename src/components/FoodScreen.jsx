@@ -1,13 +1,25 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Send, Plus, Upload, X, Image as ImageIcon, Utensils, Camera, Trash2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { parseFoodFromQuery } from '../lib/gemini';
+import { supabase } from '../lib/supabaseClient';
+import { loadFoodCatalog } from '../lib/catalogs';
 
 import { COMMON_FOODS } from '../lib/foodUtils';
 
 const CATEGORIES = ['All', 'Indian', 'International', 'Healthy', 'Quick Snacks'];
 
-export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, showConfirm }) {
+export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, showConfirm, userId }) {
+  const [foodCatalog, setFoodCatalog] = useState(COMMON_FOODS);
+  useEffect(() => {
+    let mounted = true;
+    loadFoodCatalog().then((catalog) => {
+      if (mounted) setFoodCatalog(catalog);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -21,6 +33,8 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
   const [customC, setCustomC] = useState('');
   const [customF, setCustomF] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [isSavingCustomFood, setIsSavingCustomFood] = useState(false);
   const fileInputRef = useRef(null);
 
   // Quantity Modal state
@@ -59,7 +73,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     setIsProcessing(true);
     await new Promise(r => setTimeout(r, 400));
 
-    const nutrition = parseFoodFromQuery(inputText);
+    const nutrition = parseFoodFromQuery(inputText, foodCatalog);
 
     setSelectedFoodForQuantity({
       name: nutrition.foodName,
@@ -139,6 +153,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setPhotoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       setPhotoPreview(reader.result);
@@ -146,7 +161,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     reader.readAsDataURL(file);
   };
 
-  const handleSaveCustomFood = (e) => {
+  const handleSaveCustomFood = async (e) => {
     e.preventDefault();
     if (!customName.trim()) return;
 
@@ -154,6 +169,21 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     const p = Math.max(0, parseFloat(customP) || 0);
     const c = Math.max(0, parseFloat(customC) || 0);
     const f = Math.max(0, parseFloat(customF) || 0);
+
+    let photoUrl = null;
+    if (photoFile && userId) {
+      setIsSavingCustomFood(true);
+      const ext = (photoFile.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('food-photos').upload(path, photoFile);
+      if (uploadError) {
+        console.error('Photo upload failed', uploadError);
+        showAlert('Could not upload the photo, saving the entry without it.');
+      } else {
+        photoUrl = path;
+      }
+      setIsSavingCustomFood(false);
+    }
 
     onSave({
       name: customName.trim(),
@@ -163,6 +193,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
       c,
       f,
       photo: photoPreview || null,
+      photo_url: photoUrl,
       date: todayStr,
       timestamp: new Date().toISOString(),
       category: 'Custom'
@@ -175,6 +206,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     setCustomC('');
     setCustomF('');
     setPhotoPreview(null);
+    setPhotoFile(null);
     setIsCustomModalOpen(false);
   };
 
@@ -210,7 +242,7 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
     };
   };
 
-  const filteredFoods = COMMON_FOODS.filter(food => {
+  const filteredFoods = foodCatalog.filter(food => {
     if (activeCategory === 'All') return true;
     if (food.category === activeCategory) return true;
     if (food.tags && food.tags.includes(activeCategory)) return true;
@@ -679,10 +711,11 @@ export default function FoodScreen({ habits = [], onSave, onRemove, showAlert, s
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(239,68,68,0.25)] flex items-center justify-center space-x-2 cursor-pointer"
+                  disabled={isSavingCustomFood}
+                  className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white py-3 rounded-xl font-bold text-sm transition shadow-[0_0_15px_rgba(239,68,68,0.25)] flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <Upload size={16} />
-                  <span>Save Food Entry</span>
+                  <span>{isSavingCustomFood ? 'Uploading...' : 'Save Food Entry'}</span>
                 </button>
               </div>
             </form>
