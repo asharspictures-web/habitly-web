@@ -6,6 +6,7 @@ import ExerciseScreen from './components/ExerciseScreen';
 import FoodScreen from './components/FoodScreen';
 import StepsScreen from './components/StepsScreen';
 import GoalsScreen from './components/GoalsScreen';
+import HealthSafetyScreen from './components/HealthSafetyScreen';
 import DeviceConnectScreen from './components/DeviceConnectScreen';
 import AIAssistantScreen from './components/AIAssistantScreen';
 import HomePage from './components/HomePage';
@@ -111,6 +112,8 @@ function App() {
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
         return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
+      case 'health-safety':
+        return <HealthSafetyScreen userId={user?.id} />;
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':

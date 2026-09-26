@@ -1,4 +1,4 @@
-import { LayoutDashboard, Dumbbell, Utensils, Footprints, Watch, Bot, Target, ChartLine, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Utensils, Footprints, Watch, Bot, Target, ChartLine, CreditCard, ShieldCheck } from 'lucide-react';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -8,6 +8,7 @@ const navItems = [
   { id: 'connect', label: 'Connect Devices', icon: Watch },
   { id: 'ai', label: 'AI Assistant', icon: Bot },
   { id: 'goals', label: 'Goals', icon: ChartLine },
+  { id: 'health-safety', label: 'Health & Safety', icon: ShieldCheck },
   { id: 'pricing', label: 'Pricing', icon: CreditCard },
 ];
 
