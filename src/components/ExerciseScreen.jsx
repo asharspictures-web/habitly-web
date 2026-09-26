@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Clock, Plus, Flame, Play, Pause, Check, PlaySquare, Lock } from 'lucide-react';
 import { validateWorkout, calculatePace, calculateCaloriesBurnt, EXERCISE_LIBRARY } from '../lib/workoutUtils.js';
+import { loadExerciseLibrary } from '../lib/catalogs';
 
 // Activity options – each will render a different set of fields.
 const EXERCISE_TYPES = [
@@ -18,14 +19,14 @@ const EXERCISE_TYPES = [
  * Helper component that renders fields specific to the selected activity.
  * Returns a workout object matching the new schema.
  */
-function ActivityForm({ activity, onChange, habits }) {
+function ActivityForm({ activity, onChange, habits, exerciseCatalog }) {
   const [exerciseName, setExerciseName] = useState(''); // for strength
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [libraryFilter, setLibraryFilter] = useState('All');
   const [librarySearch, setLibrarySearch] = useState('');
-  
-  const suggestionList = EXERCISE_LIBRARY.exercises.map(e => e.name);
+
+  const suggestionList = exerciseCatalog.map(e => e.name);
   const filteredSuggestions = suggestionList.filter(s => s.toLowerCase().includes(exerciseName.toLowerCase()));
   const [setType, setSetType] = useState('working'); // strength set type
   const [reps, setReps] = useState('');
@@ -262,7 +263,7 @@ function ActivityForm({ activity, onChange, habits }) {
               </div>
 
               <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-                {EXERCISE_LIBRARY.exercises
+                {exerciseCatalog
                   .filter(e => libraryFilter === 'All' || e.level === libraryFilter || e.tags.includes(libraryFilter))
                   .filter(e => e.name.toLowerCase().includes(librarySearch.toLowerCase()))
                   .map((e, idx) => (
@@ -382,6 +383,17 @@ function ActivityForm({ activity, onChange, habits }) {
 }
 
 export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals, updateGoals, showAlert, showConfirm, tier = 'free', updateTier }) {
+  const [exerciseCatalog, setExerciseCatalog] = useState(EXERCISE_LIBRARY.exercises);
+  useEffect(() => {
+    let mounted = true;
+    loadExerciseLibrary().then((catalog) => {
+      if (mounted) setExerciseCatalog(catalog);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const [mode, setMode] = useState('static'); // 'static' | 'live'
   const [selectedActivity, setSelectedActivity] = useState('Strength Training');
   const [currentWorkout, setCurrentWorkout] = useState({ activity: selectedActivity });
@@ -693,7 +705,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
                 className="flex-1 bg-[#09090b] border border-[#27272a] text-white text-sm p-2.5 rounded-lg focus:outline-none focus:border-red-500/50"
               >
                 <option value="">-- Select from library --</option>
-                {EXERCISE_LIBRARY.exercises.map(e => (
+                {exerciseCatalog.map(e => (
                   <option key={e.name} value={e.name}>{e.name}</option>
                 ))}
               </select>
@@ -702,7 +714,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
                   const select = document.getElementById('custom-ex-select');
                   const name = select.value;
                   if (name) {
-                    const libEx = EXERCISE_LIBRARY.exercises.find(e => e.name === name);
+                    const libEx = exerciseCatalog.find(e => e.name === name);
                     if (libEx) {
                       updateGoals({ ...goals, activeRoutine: [...activeRoutine, { ...libEx }] });
                     }
@@ -775,7 +787,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
               ))}
             </select>
           </div>
-          <ActivityForm key={`live-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
+          <ActivityForm key={`live-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} exerciseCatalog={exerciseCatalog} />
           <div className="flex space-x-4">
             <button
               type="button"
@@ -827,7 +839,7 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
               ))}
             </select>
           </div>
-          <ActivityForm key={`static-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} />
+          <ActivityForm key={`static-${selectedActivity}-${formResetKey}`} activity={selectedActivity} onChange={setCurrentWorkout} habits={habits} exerciseCatalog={exerciseCatalog} />
           <button
             type="submit"
             onClick={handleStaticSubmit}

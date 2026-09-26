@@ -1,7 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Bell, BellOff, LogOut, Dumbbell, Utensils, X, Check, Menu } from 'lucide-react';
 
-export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {}, tier = 'free', updateTier = () => {}, isMobileMenuOpen, setIsMobileMenuOpen }) {
+export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [], setCurrentView = () => {}, tier = 'free', updateTier = () => {}, isMobileMenuOpen, setIsMobileMenuOpen, user = null, onSignOut = () => {} }) {
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Guest';
+  const displayEmail = user?.email || '';
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('') || 'U';
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -110,9 +118,10 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
     }
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setIsProfileOpen(false);
-    setToastMessage('Signed out successfully (Demo session reset)');
+    const { error } = await onSignOut();
+    setToastMessage(error ? 'Sign out failed, please try again.' : 'Signed out successfully.');
     setTimeout(() => {
       setToastMessage('');
     }, 3500);
@@ -305,7 +314,7 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
             aria-label="User Profile"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-amber-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
-              AM
+              {initials}
             </div>
           </button>
 
@@ -313,22 +322,18 @@ export function TopBar({ searchQuery = '', setSearchQuery = () => {}, habits = [
             <div className="absolute right-0 mt-3 w-72 bg-[#18181b] border border-[#27272a] rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center space-x-3 pb-3 border-b border-[#27272a]">
                 <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-red-600 to-amber-500 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-lg">
-                  AM
+                  {initials}
                 </div>
                 <div className="truncate">
-                  <p className="font-bold text-white text-sm truncate">Alex Morgan</p>
-                  <p className="text-xs text-zinc-400 truncate">alex.morgan@example.com</p>
+                  <p className="font-bold text-white text-sm truncate capitalize">{displayName}</p>
+                  <p className="text-xs text-zinc-400 truncate">{displayEmail}</p>
                   <span className="inline-block mt-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-                    Active Member
+                    {tier === 'premium' ? 'Premium Member' : tier === 'pro' ? 'Pro Member' : 'Member'}
                   </span>
                 </div>
               </div>
 
               <div className="py-2.5 my-1 text-xs text-zinc-400 space-y-1.5">
-                <div className="flex justify-between items-center py-1">
-                  <span>Current Streak</span>
-                  <span className="text-amber-400 font-bold">7 Days 🔥</span>
-                </div>
                 <div className="flex justify-between items-center py-1">
                   <span>Demo Tier</span>
                   <select 

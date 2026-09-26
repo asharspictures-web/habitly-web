@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import DashboardScreen from './components/DashboardScreen';
@@ -10,7 +10,10 @@ import DeviceConnectScreen from './components/DeviceConnectScreen';
 import AIAssistantScreen from './components/AIAssistantScreen';
 import HomePage from './components/HomePage';
 import PricingPage from './components/PricingPage';
+import AuthScreen from './components/AuthScreen';
 import { useHabits } from './hooks/useHabits';
+import { useAuth } from './hooks/useAuth';
+import { migrateLocalDataToSupabase } from './lib/migrateLocalData';
 
 
 class ErrorBoundary extends React.Component {
@@ -49,28 +52,38 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
-  const { 
-    habits, 
-    goals, 
-    addWorkout, 
-    addFood, 
+  const {
+    user,
+    loading: authLoading,
+    tier,
+    updateTier,
+    signInWithPassword,
+    signUpWithPassword,
+    signInWithGoogle,
+    signOut
+  } = useAuth();
+
+  const {
+    habits,
+    goals,
+    addWorkout,
+    addFood,
     removeFood,
-    updateSteps, 
+    updateSteps,
     updateGoals,
     updateWater,
     addWater,
     updateSleep
-  } = useHabits();
+  } = useHabits(user?.id);
+
+  useEffect(() => {
+    if (user?.id) migrateLocalDataToSupabase(user.id);
+  }, [user?.id]);
+
   const [currentView, setCurrentView] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [modalConfig, setModalConfig] = useState(null);
-  const [tier, setTier] = useState(() => localStorage.getItem('habitlyTier') || 'basic');
-
-  const updateTier = (newTier) => {
-    localStorage.setItem('habitlyTier', newTier);
-    setTier(newTier);
-  };
 
   const showAlert = (message) => setModalConfig({ type: 'alert', message });
   const showConfirm = (message, onConfirm, onCancel, confirmText, cancelText) => {
@@ -78,6 +91,11 @@ function App() {
   };
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Home and Pricing are the unauthenticated marketing pages; every other
+  // screen needs a signed-in user since it reads/writes account data.
+  const requiresAuth = currentView !== 'home' && currentView !== 'pricing';
+  const isAuthed = Boolean(user);
 
   const renderScreen = () => {
     switch (currentView) {
@@ -88,7 +106,7 @@ function App() {
       case 'exercise':
         return <ExerciseScreen habits={habits} onSave={addWorkout} searchQuery={searchQuery} goals={goals} updateGoals={updateGoals} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'food':
-        return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} showAlert={showAlert} showConfirm={showConfirm} />;
+        return <FoodScreen habits={habits} onSave={addFood} onRemove={removeFood} showAlert={showAlert} showConfirm={showConfirm} userId={user?.id} />;
       case 'steps':
         return <StepsScreen habits={habits} onSave={updateSteps} />;
       case 'goals':
@@ -113,21 +131,39 @@ function App() {
     }
   };
 
+  if (requiresAuth && authLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#09090b] text-zinc-400 text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  if (requiresAuth && !isAuthed) {
+    return (
+      <AuthScreen
+        onSignIn={signInWithPassword}
+        onSignUp={signUpWithPassword}
+        onGoogleSignIn={signInWithGoogle}
+      />
+    );
+  }
+
   return (
     <ErrorBoundary>
       <div className="flex h-screen bg-[#09090b] text-white overflow-hidden font-sans">
         {currentView !== 'home' && (
-          <Sidebar 
-            currentView={currentView} 
-            setCurrentView={setCurrentView} 
+          <Sidebar
+            currentView={currentView}
+            setCurrentView={setCurrentView}
             isMobileMenuOpen={isMobileMenuOpen}
             setIsMobileMenuOpen={setIsMobileMenuOpen}
           />
         )}
-        
+
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
           {currentView !== 'home' && (
-            <TopBar 
+            <TopBar
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               habits={habits}
@@ -136,9 +172,11 @@ function App() {
               updateTier={updateTier}
               isMobileMenuOpen={isMobileMenuOpen}
               setIsMobileMenuOpen={setIsMobileMenuOpen}
+              user={user}
+              onSignOut={signOut}
             />
           )}
-          
+
           <main className="flex-1 overflow-y-auto p-4 md:p-10 relative">
             {renderScreen()}
           </main>
