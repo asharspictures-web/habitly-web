@@ -629,18 +629,18 @@ export default function ExerciseScreen({ habits, onSave, searchQuery = '', goals
       </div>
 
       {activeRoutine.length > 0 && (
-        <div className={`relative bg-[#18181b] rounded-2xl p-6 shadow-xl overflow-hidden ${tier === 'premium' ? 'border border-amber-500/50 bg-gradient-to-br from-[#18181b] to-amber-900/10' : tier === 'pro' ? 'border border-amber-500/30' : 'border border-[#27272a]'}`}>
-          <div className={`absolute top-0 right-0 text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-bl-xl z-30 ${tier === 'premium' ? 'bg-amber-500 text-black' : tier === 'pro' ? 'bg-amber-600/80 text-white' : 'bg-zinc-700 text-white'}`}>Active Routine</div>
+        <div className={`relative bg-[#18181b] rounded-2xl p-6 shadow-xl overflow-hidden ${tier === 'premium' ? 'border border-amber-500/50 bg-gradient-to-br from-[#18181b] to-amber-900/10' : 'border border-[#27272a]'}`}>
+          <div className={`absolute top-0 right-0 text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-bl-xl z-30 ${tier === 'premium' ? 'bg-amber-500 text-black' : 'bg-zinc-700 text-white'}`}>Active Routine</div>
           
-          {tier === 'basic' && (
+          {tier !== 'premium' && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/50 backdrop-blur-[4px]">
               <Lock className="text-amber-500 mb-3" size={40} />
-              <p className="text-white font-bold text-lg mb-4 shadow-sm">Unlock with Pro</p>
-              <button onClick={() => updateTier('pro')} className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-6 py-2.5 rounded-xl transition-colors shadow-lg">Upgrade Now</button>
+              <p className="text-white font-bold text-lg mb-4 shadow-sm">Unlock with Premium</p>
+              <button onClick={() => updateTier('premium')} className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-6 py-2.5 rounded-xl transition-colors shadow-lg">Upgrade Now</button>
             </div>
           )}
           
-          <div className={`relative z-10 transition-all duration-300 ${tier === 'basic' ? 'blur-[6px] opacity-40 pointer-events-none select-none' : ''}`}>
+          <div className={`relative z-10 transition-all duration-300 ${tier !== 'premium' ? 'blur-[6px] opacity-40 pointer-events-none select-none' : ''}`}>
             <h3 className="font-bold text-white mb-4">Your Custom Routine</h3>
           <div className="space-y-3">
             {activeRoutine.map((ex, idx) => {
