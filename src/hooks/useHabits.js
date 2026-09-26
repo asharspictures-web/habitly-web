@@ -455,6 +455,73 @@ export function useHabits(userId) {
   );
 
   // Kept for API compatibility; not called anywhere in the current UI.
+  const fetchPeriodLogs = useCallback(async () => {
+    if (!userId) return [];
+    const { data, error } = await supabase
+      .from('period_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('start_date', { ascending: false });
+    if (error) {
+      console.error('fetchPeriodLogs failed', error);
+      return [];
+    }
+    return data || [];
+  }, [userId]);
+
+  const addPeriodLog = useCallback(async (startDate, endDate) => {
+    if (!userId) return { error: 'Not logged in' };
+    const { data, error } = await supabase
+      .from('period_logs')
+      .insert({
+        user_id: userId,
+        start_date: startDate,
+        end_date: endDate || null
+      });
+    if (error) console.error('addPeriodLog failed', error);
+    return { data, error };
+  }, [userId]);
+
+  const deletePeriodLog = useCallback(async (id) => {
+    if (!userId) return { error: 'Not logged in' };
+    const { data, error } = await supabase
+      .from('period_logs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) console.error('deletePeriodLog failed', error);
+    return { data, error };
+  }, [userId]);
+
+  const getNextPredictedDate = useCallback((logs) => {
+    if (!logs || logs.length < 2) return null;
+    
+    // Sort descending by start_date to be safe
+    const sorted = [...logs].sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+    
+    // Use up to the last 6 logs to find averages
+    const recentLogs = sorted.slice(0, 6);
+    if (recentLogs.length < 2) return null;
+
+    let totalDays = 0;
+    let gaps = 0;
+    
+    for (let i = 0; i < recentLogs.length - 1; i++) {
+      const current = new Date(recentLogs[i].start_date);
+      const prev = new Date(recentLogs[i+1].start_date);
+      const diffTime = Math.abs(current - prev);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      totalDays += diffDays;
+      gaps++;
+    }
+    
+    const avgCycle = totalDays / gaps;
+    
+    const lastDate = new Date(sorted[0].start_date);
+    const nextDate = new Date(lastDate.getTime() + (avgCycle * 24 * 60 * 60 * 1000));
+    return nextDate.toISOString().split('T')[0];
+  }, []);
+
   const addEntry = useCallback(
     (entry) => {
       const { workoutType, workoutDuration, sleep, water, steps, meals } = entry;
@@ -482,5 +549,10 @@ export function useHabits(userId) {
     addWater,
     updateSleep,
     updateMood,
+
+    fetchPeriodLogs,
+    addPeriodLog,
+    deletePeriodLog,
+    getNextPredictedDate,
   };
 }

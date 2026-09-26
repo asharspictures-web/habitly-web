@@ -75,7 +75,11 @@ function App() {
     updateWater,
     addWater,
     updateSleep,
-    updateMood
+    updateMood,
+    fetchPeriodLogs,
+    addPeriodLog,
+    deletePeriodLog,
+    getNextPredictedDate,
   } = useHabits(user?.id);
 
   useEffect(() => {
@@ -114,7 +118,13 @@ function App() {
       case 'goals':
         return <GoalsScreen goals={goals} updateGoals={updateGoals} addFood={addFood} showAlert={showAlert} showConfirm={showConfirm} tier={tier} updateTier={updateTier} />;
       case 'health-safety':
-        return <HealthSafetyScreen userId={user?.id} />;
+        return <HealthSafetyScreen 
+          userId={user?.id}
+          fetchPeriodLogs={fetchPeriodLogs}
+          addPeriodLog={addPeriodLog}
+          deletePeriodLog={deletePeriodLog}
+          getNextPredictedDate={getNextPredictedDate}
+        />;
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':

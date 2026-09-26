@@ -31,7 +31,7 @@ const SECTIONS = [
     icon: <HeartPulse />,
     accentBg: 'bg-rose-500/10 border-rose-500/20 text-rose-500',
     accentBorder: 'hover:border-rose-500/50',
-    status: 'On Roadmap'
+    status: 'Active'
   },
   {
     id: 'community',
@@ -45,7 +45,13 @@ const SECTIONS = [
   }
 ];
 
-export default function HealthSafetyScreen({ userId }) {
+export default function HealthSafetyScreen({ 
+  userId,
+  fetchPeriodLogs,
+  addPeriodLog,
+  deletePeriodLog,
+  getNextPredictedDate 
+}) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -55,13 +61,43 @@ export default function HealthSafetyScreen({ userId }) {
   
   const [selectedSection, setSelectedSection] = useState(null);
 
+  const [periods, setPeriods] = useState([]);
+  const [loadingPeriods, setLoadingPeriods] = useState(true);
+  const [periodStartDate, setPeriodStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [periodEndDate, setPeriodEndDate] = useState('');
+
   useEffect(() => {
     if (userId) {
       fetchContacts();
+      loadPeriods();
     } else {
       setLoading(false);
+      setLoadingPeriods(false);
     }
-  }, [userId]);
+  }, [userId, fetchPeriodLogs]);
+
+  const loadPeriods = async () => {
+    if (fetchPeriodLogs) {
+      const data = await fetchPeriodLogs();
+      setPeriods(data || []);
+    }
+    setLoadingPeriods(false);
+  };
+
+  const handleAddPeriod = async (e) => {
+    e.preventDefault();
+    if (!periodStartDate || !addPeriodLog) return;
+    await addPeriodLog(periodStartDate, periodEndDate);
+    setPeriodStartDate(new Date().toISOString().split('T')[0]);
+    setPeriodEndDate('');
+    loadPeriods();
+  };
+
+  const handleDeletePeriod = async (id) => {
+    if (!deletePeriodLog) return;
+    await deletePeriodLog(id);
+    loadPeriods();
+  };
 
   const fetchContacts = async () => {
     const { data, error } = await supabase
@@ -234,8 +270,103 @@ export default function HealthSafetyScreen({ userId }) {
           </div>
         </div>
 
+        {/* Women's Health Card (Functional) */}
+        <div className={`bg-[#18181b] border border-[#27272a] rounded-2xl p-6 flex flex-col transition-all duration-300 ${SECTIONS[2].accentBorder} group relative`}>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-12 h-12 rounded-xl border flex items-center justify-center text-2xl shadow-sm ${SECTIONS[2].accentBg}`}>
+                {SECTIONS[2].icon}
+              </div>
+              <span className="text-[11px] font-medium px-2.5 py-1 rounded-full border border-zinc-700 bg-zinc-800/80 text-zinc-400 flex items-center space-x-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{SECTIONS[2].status}</span>
+              </span>
+            </div>
+
+            <h4 className="text-lg font-bold text-white tracking-tight group-hover:text-rose-400 transition-colors">
+              {SECTIONS[2].name}
+            </h4>
+            <p className="text-xs font-semibold text-zinc-400 mt-0.5 mb-1.5">
+              {SECTIONS[2].subtitle}
+            </p>
+            <p className="text-[10px] text-zinc-500 italic">This data is private and only visible to you.</p>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#27272a]/60 flex-1 flex flex-col">
+            {loadingPeriods ? (
+              <p className="text-zinc-500 text-xs">Loading...</p>
+            ) : (
+              <div className="space-y-3 mb-6 flex-1">
+                {periods.length === 0 ? (
+                  <div className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 text-center">
+                    <p className="text-zinc-400 text-xs font-medium">No periods logged yet.</p>
+                    <p className="text-zinc-500 text-[10px] mt-1">Predicted next: Not enough data yet</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 mb-4">
+                      <p className="text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">Predicted Next</p>
+                      <p className="text-white text-sm font-semibold">
+                        {getNextPredictedDate && getNextPredictedDate(periods)
+                          ? new Date(getNextPredictedDate(periods) + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                          : 'Not enough data yet'}
+                      </p>
+                    </div>
+                    {periods.map(period => (
+                      <div key={period.id} className="bg-[#09090b] border border-[#27272a] rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-white">{new Date(period.start_date + 'T00:00:00').toLocaleDateString()}</p>
+                          {period.end_date && <p className="text-xs text-zinc-400">Ended: {new Date(period.end_date + 'T00:00:00').toLocaleDateString()}</p>}
+                        </div>
+                        <button
+                          onClick={() => handleDeletePeriod(period.id)}
+                          className="p-2 text-zinc-500 hover:text-rose-500 bg-[#18181b] hover:bg-[#27272a] rounded-lg transition-colors cursor-pointer"
+                          title="Delete Log"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleAddPeriod} className="mt-auto space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={periodStartDate}
+                    onChange={(e) => setPeriodStartDate(e.target.value)}
+                    className="w-full bg-[#09090b] border border-[#27272a] text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-rose-500/50"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mb-1">End Date <span className="lowercase font-normal text-zinc-600">(opt)</span></label>
+                  <input
+                    type="date"
+                    value={periodEndDate}
+                    onChange={(e) => setPeriodEndDate(e.target.value)}
+                    className="w-full bg-[#09090b] border border-[#27272a] text-white text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-rose-500/50"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={!periodStartDate}
+                className="w-full py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 active:scale-95 text-white text-xs font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(225,29,72,0.2)] flex items-center justify-center cursor-pointer"
+              >
+                <Plus size={14} className="mr-1" /> Log Period
+              </button>
+            </form>
+          </div>
+        </div>
+
         {/* Other Sections (Coming Soon) */}
-        {SECTIONS.slice(1).map((section) => (
+        {SECTIONS.filter(s => s.status !== 'Active').map((section) => (
           <div
             key={section.id}
             onClick={() => setSelectedSection(section)}

@@ -167,6 +167,18 @@ create table if not exists public.emergency_contacts (
 create index if not exists emergency_contacts_user_id_idx on public.emergency_contacts (user_id);
 
 -- =========================================================================
+-- period_logs (women's health tracker, simple per-user table)
+-- =========================================================================
+create table if not exists public.period_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  start_date date not null,
+  end_date date,
+  created_at timestamptz not null default now()
+);
+create index if not exists period_logs_user_id_start_date_idx on public.period_logs (user_id, start_date desc);
+
+-- =========================================================================
 -- migration_state (drives the one-time local -> cloud migration)
 -- =========================================================================
 create table if not exists public.migration_state (
@@ -219,6 +231,7 @@ alter table public.daily_metrics enable row level security;
 alter table public.weigh_ins enable row level security;
 alter table public.migration_state enable row level security;
 alter table public.emergency_contacts enable row level security;
+alter table public.period_logs enable row level security;
 
 -- profiles (own row, keyed by id not user_id)
 drop policy if exists "profiles_select_own" on public.profiles;
@@ -234,12 +247,12 @@ create policy "goals_insert_own" on public.goals for insert with check (user_id 
 drop policy if exists "goals_update_own" on public.goals;
 create policy "goals_update_own" on public.goals for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- workouts / food_logs / water_logs / weigh_ins / migration_state / emergency_contacts: standard own-row CRUD
+-- workouts / food_logs / water_logs / weigh_ins / migration_state / emergency_contacts / period_logs: standard own-row CRUD
 do $$
 declare
   t text;
 begin
-  foreach t in array array['workouts', 'food_logs', 'water_logs', 'weigh_ins', 'migration_state', 'emergency_contacts'] loop
+  foreach t in array array['workouts', 'food_logs', 'water_logs', 'weigh_ins', 'migration_state', 'emergency_contacts', 'period_logs'] loop
     execute format('drop policy if exists "%s_select_own" on public.%I', t, t);
     execute format('create policy "%s_select_own" on public.%I for select using (user_id = auth.uid())', t, t);
     execute format('drop policy if exists "%s_insert_own" on public.%I', t, t);
