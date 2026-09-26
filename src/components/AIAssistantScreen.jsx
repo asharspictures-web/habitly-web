@@ -10,7 +10,7 @@ const SUGGESTED_PROMPTS = [
   "What was my sleep last night?"
 ];
 
-export default function AIAssistantScreen({ habits = [], onLogFood }) {
+export default function AIAssistantScreen({ habits = [], goals = {}, onLogFood }) {
   const counterRef = useRef(1);
   const [messages, setMessages] = useState(() => [
     {
@@ -47,7 +47,7 @@ export default function AIAssistantScreen({ habits = [], onLogFood }) {
     setIsThinking(true);
 
     try {
-      const response = await chatWithAI(text, habits);
+      const response = await chatWithAI(text, habits, goals);
       const replyText = typeof response === 'string' ? response : (response.text || response.toString());
       const rawCard = response.card ? { ...response.card } : null;
 

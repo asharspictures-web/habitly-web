@@ -128,7 +128,7 @@ function App() {
       case 'connect':
         return <DeviceConnectScreen onNavigate={setCurrentView} />;
       case 'ai':
-        return <AIAssistantScreen habits={habits} onLogFood={addFood} showAlert={showAlert} showConfirm={showConfirm} />;
+        return <AIAssistantScreen habits={habits} goals={goals} onLogFood={addFood} showAlert={showAlert} showConfirm={showConfirm} />;
       case 'dashboard':
       default:
         return (

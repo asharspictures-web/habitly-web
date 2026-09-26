@@ -243,7 +243,23 @@ export async function generateSummary(habits) {
 }
 
 // Interactive AI Chat function with food logging card generation
-export async function chatWithAI(question, habits = [], foodDatabase = COMMON_FOOD_DATABASE) {
+export const SYSTEM_PROMPT = `
+You are the Habitly AI Health & Nutrition Assistant, embedded inside the Habitly fitness app.
+
+Rules:
+1. Use only the real data given to you about this user (their logged meals, calories, workouts, steps, weight, mood). Never respond with generic filler like "great question" or "you're doing well" unless you can point to an actual number or log entry. If there isn't enough logged data to answer, say exactly what's missing and ask for it. Don't guess.
+
+2. Safety first on weight and health questions. If a request is physically unsafe or impossible, do not comply and do not soften it with encouragement. State plainly that it isn't medically safe or realistic, explain why in one simple sentence, then give the safe alternative instead.
+Unsafe patterns to catch: losing more than 0.5-1 kg of real body fat in a week (never in a single day), calorie intake below 1200 kcal/day for women or 1500 kcal/day for men, skipping meals to lose weight fast, exercising through pain or injury, any mention of purging, laxatives, or diet pills.
+
+3. Never diagnose a medical condition. If the user describes symptoms, pain, or a medical concern, tell them to see a doctor or physiotherapist. Do not guess what's wrong with them.
+
+4. Keep answers short and specific, two to four sentences unless a full plan is asked for. No corporate chatbot phrases like "That's a great question" or "Based on your recent logs, you are generally doing well." Get to the point.
+
+5. Tone: supportive and direct, like a knowledgeable coach, not a disclaimer machine. Give the safety warning when needed, then move straight to something useful.
+`;
+
+export async function chatWithAI(question, habits = [], goals = {}, foodDatabase = COMMON_FOOD_DATABASE) {
   const isTest = typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || (process.argv && process.argv.some(a => a.includes('test'))));
   await new Promise(resolve => setTimeout(resolve, isTest ? 5 : 350));
 
@@ -254,6 +270,29 @@ export async function chatWithAI(question, habits = [], foodDatabase = COMMON_FO
   const safeHabits = Array.isArray(habits) ? habits : [];
   const latest = safeHabits.length > 0 ? safeHabits[safeHabits.length - 1] : null;
   const lowerQ = question.toLowerCase();
+
+  // In a real LLM integration, we would pass SYSTEM_PROMPT and this exact userContext:
+  const userContext = `
+    User Data:
+    Weight: ${goals.currentWeight || 'Unknown'} kg
+    Target Weight: ${goals.targetWeight || 'Unknown'} kg
+    Today's Steps: ${latest?.steps || 0}
+    Today's Sleep: ${latest?.sleep || 0} hours
+    Today's Water: ${latest?.water || 0} glasses
+    Today's Mood: ${latest?.mood || 'None'}
+    Today's Workouts: ${latest?.workoutDuration || 0} mins
+    Today's Meals: ${(latest?.foods || []).map(f => f.name).join(', ') || 'None'}
+  `;
+
+  // 0. Safety Catch-alls (Mocking Rule 2 of SYSTEM_PROMPT)
+  if (lowerQ.includes('lose 5 kg') && (lowerQ.includes('in one day') || lowerQ.includes('a day'))) {
+    return createAIResponse("It isn't medically safe or realistic to lose 5 kgs in a single day, as healthy weight loss is limited to 0.5-1 kg per week. Instead, focus on a sustainable calorie deficit and hitting your daily step goal.");
+  }
+
+  if (lowerQ.includes('skipped meals') || lowerQ.includes('skip meals to lose weight')) {
+    return createAIResponse("It isn't medically safe or realistic to skip meals for days to accelerate weight loss, as you risk severe nutrient deficiency and muscle loss. Instead, aim for a balanced diet with a moderate 500-calorie deficit while hitting your protein target.");
+  }
+
 
   // 1. Check if user is asking AI to log a food entry
   if (isFoodLogRequest(question, foodDatabase)) {
