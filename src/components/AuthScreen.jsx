@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, LogIn, UserPlus } from 'lucide-react';
+import { Mail, Lock, User, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthScreen({ onSignIn, onSignUp, onGoogleSignIn }) {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -93,14 +94,21 @@ export default function AuthScreen({ onSignIn, onSignUp, onGoogleSignIn }) {
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full bg-[#09090b] border border-[#27272a] text-white pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-red-500/50 text-sm"
+              className="w-full bg-[#09090b] border border-[#27272a] text-white pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:border-red-500/50 text-sm"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           {error && (
