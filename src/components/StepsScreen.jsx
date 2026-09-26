@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
-import { Footprints, Save } from 'lucide-react';
+import { Footprints, Save, Plus } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function StepsScreen({ habits, onSave }) {
   const [steps, setSteps] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const todayData = habits.find(h => h.date === new Date().toISOString().split('T')[0]);
+  const todaySteps = todayData?.steps || 0;
+
+  const handleQuickStepsAdd = (amount) => {
+    onSave(todaySteps + amount);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -26,9 +35,6 @@ export default function StepsScreen({ habits, onSave }) {
       steps: habit?.steps || 0
     };
   });
-
-  const todayData = habits.find(h => h.date === new Date().toISOString().split('T')[0]);
-  const todaySteps = todayData?.steps || 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -56,6 +62,25 @@ export default function StepsScreen({ habits, onSave }) {
         <div className="lg:col-span-1">
           <div className="bg-[#18181b] rounded-2xl border border-[#27272a] p-6">
             <h3 className="text-lg font-bold text-white mb-4">Log Steps</h3>
+            
+            {/* Quick Add Presets */}
+            <div className="mb-6">
+              <label className="block text-xs font-semibold text-zinc-400 mb-2">Quick Add</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[1000, 2500, 5000].map((stepCount) => (
+                  <button
+                    key={stepCount}
+                    type="button"
+                    onClick={() => handleQuickStepsAdd(stepCount)}
+                    className="py-2.5 px-3 bg-red-500/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-500 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    <span>+{stepCount.toLocaleString()}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="number"
