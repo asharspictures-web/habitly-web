@@ -4,6 +4,42 @@ import { LineChart, Line, BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } f
 import { TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import QuickLogModal from './QuickLogModal';
 
+const MoodCard = ({ current, onLog }) => {
+  const getEmoji = (score) => {
+    switch (score) {
+      case 1: return '😫';
+      case 2: return '🙁';
+      case 3: return '😐';
+      case 4: return '🙂';
+      case 5: return '🤩';
+      default: return '😶';
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-4 bg-[#18181b] border border-[#27272a] rounded-2xl shadow-lg relative group transition-all duration-200 hover:border-zinc-700">
+      <div className="relative w-24 h-24 mb-2 flex items-center justify-center bg-[#09090b] rounded-full border-4 border-[#27272a] transition-all">
+        <span className="text-4xl filter drop-shadow-md">{getEmoji(current)}</span>
+      </div>
+      <span className="text-sm font-semibold text-zinc-300">Mood</span>
+      <span className="text-xs text-zinc-500">{current ? 'Logged' : 'No Data'}</span>
+      {onLog && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLog();
+          }}
+          className={`absolute top-2 right-2 p-1.5 rounded-full transition-all border opacity-0 group-hover:opacity-100 bg-yellow-500/10 hover:bg-yellow-600 text-yellow-400 hover:text-white border-yellow-500/30 hover:border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.15)]`}
+          title="Quick Log Mood"
+        >
+          <Plus size={14} />
+        </button>
+      )}
+    </div>
+  );
+};
+
 // Reusable Circular Progress Ring
 const ProgressRing = ({ label, current, goal, unit, defaultColor, onLog, logColorClass }) => {
   const radius = 36;
@@ -59,7 +95,8 @@ export default function DashboardScreen({
   addWater,
   updateSleep,
   updateSteps,
-  addWorkout
+  addWorkout,
+  updateMood
 }) {
   const [summary, setSummary] = useState("Analyzing your day...");
   const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
@@ -146,7 +183,7 @@ export default function DashboardScreen({
       </div>
 
       {/* Progress Rings */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
         <ProgressRing 
           label="Water" 
           current={todayData.water} 
@@ -167,6 +204,7 @@ export default function DashboardScreen({
         />
         <ProgressRing label="Steps" current={todayData.steps} goal={goals.steps} unit="" defaultColor="text-orange-400" />
         <ProgressRing label="Activity" current={todayWorkoutMins} goal={goals.workout} unit="min" defaultColor="text-red-500" />
+        <MoodCard current={todayData.mood} onLog={() => handleOpenQuickLog('mood')} />
       </div>
 
       {/* Comparison Cards */}
@@ -309,6 +347,7 @@ export default function DashboardScreen({
         updateSleep={updateSleep}
         updateSteps={updateSteps}
         addWorkout={addWorkout}
+        updateMood={updateMood}
       />
 
     </div>

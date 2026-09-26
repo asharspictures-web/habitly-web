@@ -136,6 +136,7 @@ create table if not exists public.daily_metrics (
   log_date date not null,
   steps int not null default 0 check (steps >= 0),
   sleep_hours numeric not null default 0 check (sleep_hours >= 0 and sleep_hours <= 24),
+  mood_score int check (mood_score is null or (mood_score >= 1 and mood_score <= 5)),
   updated_at timestamptz not null default now(),
   primary key (user_id, log_date)
 );

@@ -74,7 +74,8 @@ function App() {
     updateGoals,
     updateWater,
     addWater,
-    updateSleep
+    updateSleep,
+    updateMood
   } = useHabits(user?.id);
 
   useEffect(() => {
@@ -129,6 +130,7 @@ function App() {
             updateSleep={updateSleep}
             updateSteps={updateSteps}
             addWorkout={addWorkout}
+            updateMood={updateMood}
           />
         );
     }

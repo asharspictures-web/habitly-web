@@ -205,12 +205,13 @@ export function useHabits(userId) {
     setGoals(goalsRes.data ? goalsRowToObj(goalsRes.data) : DEFAULT_GOALS);
 
     const byDate = {};
-    const ensure = (date) => byDate[date] || (byDate[date] = { date, workouts: [], foods: [], steps: 0, water: 0, sleep: 0 });
+    const ensure = (date) => byDate[date] || (byDate[date] = { date, workouts: [], foods: [], steps: 0, water: 0, sleep: 0, mood: null });
 
     (metricsRes.data || []).forEach((r) => {
       const d = ensure(r.log_date);
       d.steps = r.steps;
       d.sleep = r.sleep_hours;
+      d.mood = r.mood_score;
     });
 
     const waterByDate = {};
@@ -379,6 +380,23 @@ export function useHabits(userId) {
     [userId, patchToday]
   );
 
+  const updateMood = useCallback(
+    (score) => {
+      if (!userId) return;
+      const val = Math.max(1, Math.min(5, Number(score) || 0));
+      if (val < 1 || val > 5) return;
+      const today = getTodayDate();
+      patchToday((day) => ({ ...day, mood: val }));
+      supabase
+        .from('daily_metrics')
+        .upsert({ user_id: userId, log_date: today, mood_score: val }, { onConflict: 'user_id,log_date' })
+        .then(({ error }) => {
+          if (error) console.error('updateMood failed', error);
+        });
+    },
+    [userId, patchToday]
+  );
+
   const updateWater = useCallback(
     (amountOrDelta, isAbsolute = false) => {
       if (!userId) return;
@@ -463,5 +481,6 @@ export function useHabits(userId) {
     updateWater,
     addWater,
     updateSleep,
+    updateMood,
   };
 }

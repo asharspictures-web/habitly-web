@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Droplet, Moon, Footprints, Dumbbell, Plus, Check, AlertCircle } from 'lucide-react';
+import { X, Droplet, Moon, Footprints, Dumbbell, Plus, Check, AlertCircle, Smile } from 'lucide-react';
 
 const WORKOUT_TYPES = ['Running', 'Walking', 'Weights', 'Cycling', 'Yoga', 'Swimming', 'HIIT', 'Other'];
 
@@ -13,7 +13,8 @@ export default function QuickLogModal({
   addWater,
   updateSleep,
   updateSteps,
-  addWorkout
+  addWorkout,
+  updateMood
 }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
@@ -151,7 +152,8 @@ export default function QuickLogModal({
     { id: 'water', label: 'Water', icon: Droplet, activeClass: 'text-blue-400 bg-blue-500/15 border-blue-500/30' },
     { id: 'sleep', label: 'Sleep', icon: Moon, activeClass: 'text-indigo-400 bg-indigo-500/15 border-indigo-500/30' },
     { id: 'steps', label: 'Steps', icon: Footprints, activeClass: 'text-orange-400 bg-orange-500/15 border-orange-500/30' },
-    { id: 'workout', label: 'Workout', icon: Dumbbell, activeClass: 'text-red-400 bg-red-500/15 border-red-500/30' }
+    { id: 'workout', label: 'Workout', icon: Dumbbell, activeClass: 'text-red-400 bg-red-500/15 border-red-500/30' },
+    { id: 'mood', label: 'Mood', icon: Smile, activeClass: 'text-yellow-400 bg-yellow-500/15 border-yellow-500/30' }
   ];
 
   return (
@@ -187,7 +189,7 @@ export default function QuickLogModal({
         </div>
 
         {/* Tab Buttons */}
-        <div className="grid grid-cols-4 gap-2 bg-[#09090b] p-1.5 rounded-2xl border border-[#27272a]">
+        <div className="grid grid-cols-5 gap-2 bg-[#09090b] p-1.5 rounded-2xl border border-[#27272a]">
           {tabs.map((t) => {
             const Icon = t.icon;
             const isActive = activeTab === t.id;
@@ -528,6 +530,40 @@ export default function QuickLogModal({
               <span>Log Workout</span>
             </button>
           </form>
+        )}
+
+        {/* TAB 5: MOOD */}
+        {activeTab === 'mood' && (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            <div className="text-center space-y-2">
+              <p className="text-sm font-bold text-white tracking-tight">How are you feeling today?</p>
+              <p className="text-xs text-zinc-400">Track your daily mood to see how it correlates with your habits.</p>
+            </div>
+            <div className="flex justify-between items-center bg-[#09090b] border border-[#27272a] rounded-2xl p-4">
+              {[
+                { s: 1, e: '😫', label: 'Very Low' },
+                { s: 2, e: '🙁', label: 'Low' },
+                { s: 3, e: '😐', label: 'Neutral' },
+                { s: 4, e: '🙂', label: 'Good' },
+                { s: 5, e: '🤩', label: 'Great' }
+              ].map(mood => (
+                <button
+                  key={mood.s}
+                  type="button"
+                  onClick={() => {
+                    if (updateMood) {
+                      updateMood(mood.s);
+                      triggerFeedback('success', `Mood logged: ${mood.label} ${mood.e}`);
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-[#27272a] transition-colors cursor-pointer group"
+                >
+                  <span className="text-3xl group-hover:scale-110 transition-transform">{mood.e}</span>
+                  <span className="text-[10px] text-zinc-500 font-medium">{mood.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Modal Footer */}
