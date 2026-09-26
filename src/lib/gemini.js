@@ -301,7 +301,7 @@ export async function chatWithAI(question, habits = [], goals = {}, foodDatabase
 
   if (!apiKey) {
     console.error("Gemini API key is missing (VITE_GEMINI_API_KEY). Cannot process AI request.");
-    return createAIResponse("Sorry, I couldn't process that, please try again.", card);
+    return createAIResponse("The AI Assistant requires a Gemini API key to work. Please add VITE_GEMINI_API_KEY to your environment variables (in Vercel or your .env file) to enable real AI responses.", card);
   }
 
   try {
