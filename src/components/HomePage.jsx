@@ -104,8 +104,46 @@ export default function HomePage({ onNavigate, user, onSignOut }) {
         </div>
       </div>
 
+      {/* How It Works Section */}
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-8 pt-20">
+        <h2 className="text-3xl md:text-4xl font-black text-white text-center mb-12 tracking-tight">How Habitly Works</h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          
+          <div className="bg-[#18181b] border border-[#27272a] p-8 rounded-3xl flex flex-col items-center text-center">
+            <div className="bg-[#27272a] w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
+              <Activity className="text-white" size={28} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">1. Log in seconds</h3>
+            <p className="text-zinc-400 leading-relaxed">
+              Track your daily workouts, meals, water, and sleep with just a few taps.
+            </p>
+          </div>
+
+          <div className="bg-[#18181b] border border-[#27272a] p-8 rounded-3xl flex flex-col items-center text-center">
+            <div className="bg-red-500/10 border border-red-500/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
+              <Bot className="text-red-500" size={28} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">2. AI reads your day</h3>
+            <p className="text-zinc-400 leading-relaxed">
+              Our AI Assistant automatically calculates calories, macros, and progress from what you logged.
+            </p>
+          </div>
+
+          <div className="bg-[#18181b] border border-[#27272a] p-8 rounded-3xl flex flex-col items-center text-center">
+            <div className="bg-amber-500/10 border border-amber-500/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
+              <Sparkles className="text-amber-500" size={28} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">3. Get your plan</h3>
+            <p className="text-zinc-400 leading-relaxed">
+              Habitly turns your data into a highly personalized routine and nutrition target to hit your goals.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
       {/* Feature Grid */}
-      <div className="w-full max-w-6xl mx-auto px-4 md:px-8 pb-24">
+      <div className="w-full max-w-6xl mx-auto px-4 md:px-8 pb-24 mt-4">
         <div className="grid md:grid-cols-3 gap-6 mt-12">
           
           <div className="bg-[#18181b] border border-[#27272a] p-8 rounded-3xl relative overflow-hidden group">
