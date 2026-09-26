@@ -1,7 +1,6 @@
-import { LayoutDashboard, Dumbbell, Utensils, Footprints, Watch, Bot, Target, Home, ChartLine, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Utensils, Footprints, Watch, Bot, Target, ChartLine, CreditCard } from 'lucide-react';
 
 const navItems = [
-  { id: 'home', label: 'Home', icon: Home },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'exercise', label: 'Exercise', icon: Dumbbell },
   { id: 'food', label: 'Food', icon: Utensils },
