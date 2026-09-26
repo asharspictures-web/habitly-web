@@ -260,18 +260,13 @@ Unsafe patterns to catch: losing more than 0.5-1 kg of real body fat in a week (
 `;
 
 export async function chatWithAI(question, habits = [], goals = {}, foodDatabase = COMMON_FOOD_DATABASE) {
-  const isTest = typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || (process.argv && process.argv.some(a => a.includes('test'))));
-  await new Promise(resolve => setTimeout(resolve, isTest ? 5 : 350));
-
   if (!question || typeof question !== 'string') {
     return createAIResponse("How can I assist you with your health and fitness today?");
   }
 
   const safeHabits = Array.isArray(habits) ? habits : [];
   const latest = safeHabits.length > 0 ? safeHabits[safeHabits.length - 1] : null;
-  const lowerQ = question.toLowerCase();
 
-  // In a real LLM integration, we would pass SYSTEM_PROMPT and this exact userContext:
   const userContext = `
     User Data:
     Weight: ${goals.currentWeight || 'Unknown'} kg
@@ -284,102 +279,44 @@ export async function chatWithAI(question, habits = [], goals = {}, foodDatabase
     Today's Meals: ${(latest?.foods || []).map(f => f.name).join(', ') || 'None'}
   `;
 
-  // 0. Safety Catch-alls (Mocking Rule 2 of SYSTEM_PROMPT)
-  if (lowerQ.includes('lose 5 kg') && (lowerQ.includes('in one day') || lowerQ.includes('a day'))) {
-    return createAIResponse("It isn't medically safe or realistic to lose 5 kgs in a single day, as healthy weight loss is limited to 0.5-1 kg per week. Instead, focus on a sustainable calorie deficit and hitting your daily step goal.");
-  }
-
-  if (lowerQ.includes('skipped meals') || lowerQ.includes('skip meals to lose weight')) {
-    return createAIResponse("It isn't medically safe or realistic to skip meals for days to accelerate weight loss, as you risk severe nutrient deficiency and muscle loss. Instead, aim for a balanced diet with a moderate 500-calorie deficit while hitting your protein target.");
-  }
-
-
-  // 1. Check if user is asking AI to log a food entry
+  // Retain the UI card functionality for food logging so it still renders the confirmation card,
+  // but let the AI model generate the actual text response.
+  let card = null;
   if (isFoodLogRequest(question, foodDatabase)) {
     const nutrition = parseFoodFromQuery(question, foodDatabase);
-    const text = `I've prepared a nutrition log for "${nutrition.foodName}". Check the breakdown below:`;
-    const card = {
-      type: 'food_confirmation',
-      foodName: nutrition.foodName,
-      cal: nutrition.cal,
-      p: nutrition.p,
-      c: nutrition.c,
-      f: nutrition.f,
-      logged: false
-    };
-    return createAIResponse(text, card);
-  }
-
-  // 2. Specific intent: Total calories consumed today
-  if (
-    lowerQ.includes('how many calories') ||
-    lowerQ.includes('calories have i consumed') ||
-    lowerQ.includes('calories consumed') ||
-    lowerQ.includes('calories today')
-  ) {
-    const todayFoods = latest?.foods || [];
-    const totalCal = todayFoods.reduce((acc, f) => acc + (Number(f.cal) || 0), 0);
-    if (todayFoods.length === 0) {
-      return createAIResponse("You haven't logged any foods yet today. Ask me to log your meals (e.g., 'Log 2 Rotis and Dal') or use the Quick Add list!");
+    if (nutrition) {
+      card = {
+        type: 'food_confirmation',
+        foodName: nutrition.foodName,
+        cal: nutrition.cal,
+        p: nutrition.p,
+        c: nutrition.c,
+        f: nutrition.f,
+        logged: false
+      };
     }
-    const foodList = todayFoods.map(f => f.name || f.text || 'Meal').join(', ');
-    return createAIResponse(`You have consumed ${totalCal} kcal today across ${todayFoods.length} meal(s) (${foodList}). Keep up the great tracking!`);
   }
 
-  // 3. Specific intent: Healthy snack suggestions
-  if (
-    lowerQ.includes('snack') &&
-    (lowerQ.includes('healthy') || lowerQ.includes('idea') || lowerQ.includes('protein') || lowerQ.includes('suggest'))
-  ) {
-    return createAIResponse(
-      "Here are some great high-protein healthy snack ideas:\n" +
-      "• Greek Yogurt Parfait with Berries (18g Protein • 190 kcal)\n" +
-      "• Hard Boiled Eggs (12g Protein • 140 kcal)\n" +
-      "• Whey Protein Shake (28g Protein • 160 kcal)\n" +
-      "• Apple with Peanut Butter (5g Protein • 200 kcal)\n" +
-      "• Idli Sambar (8g Protein • 180 kcal)"
-    );
+  const apiKey = import.meta.env?.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env?.VITE_GEMINI_API_KEY : null);
+
+  if (!apiKey) {
+    console.error("Gemini API key is missing (VITE_GEMINI_API_KEY). Cannot process AI request.");
+    return createAIResponse("Sorry, I couldn't process that, please try again.", card);
   }
 
-  // If no previous habits data exists yet and not a food log request
-  if (!latest) {
-    return createAIResponse("You haven't logged any data yet. Log a workout, sleep, or ask me to log your meals to get started!");
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: SYSTEM_PROMPT });
+    const prompt = `${userContext}\n\nUser: ${question}`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    return createAIResponse(text, card);
+  } catch (error) {
+    console.error("Error calling Gemini API:", error);
+    return createAIResponse("Sorry, I couldn't process that, please try again.", card);
   }
-
-  // 4. Sleep intent
-  if (lowerQ.includes("sleep")) {
-    const validSleepHabits = safeHabits.filter(h => typeof h.sleep === 'number');
-    const avgSleep = validSleepHabits.length > 0
-      ? (validSleepHabits.reduce((acc, h) => acc + h.sleep, 0) / validSleepHabits.length).toFixed(1)
-      : latest.sleep;
-    return createAIResponse(`You've averaged ${avgSleep} hours of sleep recently. Your last logged sleep was ${latest.sleep} hours.`);
-  }
-
-  // 5. Water intent
-  if (lowerQ.includes("water") || lowerQ.includes("drink")) {
-    return createAIResponse(`You've been logging around ${latest.water} glasses of water recently. Try carrying a water bottle to keep it up!`);
-  }
-
-  // 6. Steps intent
-  if (lowerQ.includes("step")) {
-    return createAIResponse(latest.steps ? `You logged ${latest.steps} steps last time. That's fantastic!` : "I don't see any step data recently.");
-  }
-
-  // 7. Recent meals intent (Line 44 fix: reads from latest.foods array)
-  if (lowerQ.includes("meal") || lowerQ.includes("eat") || lowerQ.includes("food")) {
-    const foodsList = latest.foods && latest.foods.length > 0
-      ? latest.foods.map(f => f.name || f.text || 'Meal').join(', ')
-      : null;
-    return createAIResponse(foodsList ? `Recently you logged: ${foodsList}. Looks tasty!` : "You haven't logged recent meals.");
-  }
-
-  // 8. Workout intent
-  if (lowerQ.includes("workout") || lowerQ.includes("exercise")) {
-    const dur = latest.workoutDuration || 30;
-    const typ = latest.workoutType || 'workout';
-    return createAIResponse(`Your last workout was a ${dur}-minute ${typ} session. Keep it going!`);
-  }
-
-  // Fallback
-  return createAIResponse("That's a great question! Based on your recent logs, you are generally doing well. Keep tracking to see more insights.");
 }
