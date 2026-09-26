@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 // AI Assistant & Nutrition Intelligence Engine for Habitly
 
 export const COMMON_FOOD_DATABASE = [
@@ -297,7 +299,8 @@ export async function chatWithAI(question, habits = [], goals = {}, foodDatabase
     }
   }
 
-  const apiKey = import.meta.env?.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env?.VITE_GEMINI_API_KEY : null);
+  let rawKey = import.meta.env?.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env?.VITE_GEMINI_API_KEY : null);
+  const apiKey = typeof rawKey === 'string' ? rawKey.replace(/['"]/g, '').trim() : null;
 
   if (!apiKey) {
     console.error("Gemini API key is missing (VITE_GEMINI_API_KEY). Cannot process AI request.");
@@ -305,18 +308,18 @@ export async function chatWithAI(question, habits = [], goals = {}, foodDatabase
   }
 
   try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: SYSTEM_PROMPT });
     const prompt = `${userContext}\n\nUser: ${question}`;
     
     const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = result.response.text();
     
     return createAIResponse(text, card);
   } catch (error) {
     console.error("Error calling Gemini API:", error);
-    return createAIResponse("Sorry, I couldn't process that, please try again.", card);
+    // Explicitly show the API error message so the user knows if it's an invalid key, region block, or safety filter
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return createAIResponse(`Sorry, I couldn't process that. API Error: ${errorMessage}`, card);
   }
 }
