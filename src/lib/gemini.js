@@ -309,7 +309,7 @@ export async function chatWithAI(question, habits = [], goals = {}, foodDatabase
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: SYSTEM_PROMPT });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: SYSTEM_PROMPT });
     const prompt = `${userContext}\n\nUser: ${question}`;
     
     const result = await model.generateContent(prompt);
